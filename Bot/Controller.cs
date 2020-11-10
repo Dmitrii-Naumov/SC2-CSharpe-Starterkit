@@ -140,7 +140,16 @@ namespace Bot {
             }
 
             //count buildings that are already in construction
-            if (inConstruction) {  
+            if (inConstruction)
+            {
+                foreach (var unit in GetUnits(Units.EGG))
+                    if (unit.order.AbilityId == GetEggAbility(unitType))
+                        counter += 1;
+            }
+
+            //count eggs that are already in construction
+            if (inConstruction)
+            {
                 foreach (var unit in GetUnits(unitType))
                     if (unit.buildProgress < 1)
                         counter += 1;
@@ -149,7 +158,18 @@ namespace Bot {
             return counter;
         }
 
-        public static List<Unit> GetUnits(HashSet<uint> hashset, Alliance alliance=Alliance.Self, bool onlyCompleted=false, bool onlyVisible=false) {
+        private static int GetEggAbility(uint unitType)
+        {
+            switch (unitType)
+            {
+                case Units.DRONE: return Abilities.LARVATRAIN_DRONE;
+                case Units.OVERLORD: return Abilities.LARVATRAIN_OVERLORD;
+                case Units.ZERGLING: return Abilities.LARVATRAIN_ZERGLING;
+                default: throw new NotImplementedException();
+            }
+        }
+
+		public static List<Unit> GetUnits(HashSet<uint> hashset, Alliance alliance=Alliance.Self, bool onlyCompleted=false, bool onlyVisible=false) {
             //ideally this should be cached in the future and cleared at each new frame
             var units = new List<Unit>();
             foreach (var unit in obs.Observation.RawData.Units)
@@ -188,46 +208,51 @@ namespace Bot {
         }
 
 
-        public static bool CanConstruct(uint unitType) {
+        public static bool CanConstruct(uint unitType)
+        {
             //is it a structure?
-            if (Units.Structures.Contains(unitType)) {
+            if (Units.Structures.Contains(unitType))
+            {
                 //we need worker for every structure
                 if (GetUnits(Units.Workers).Count == 0) return false;
 
                 //we need an RC for any structure
-                var resourceCenters = GetUnits(Units.ResourceCenters, onlyCompleted:true);
+                var resourceCenters = GetUnits(Units.ResourceCenters, onlyCompleted: true);
                 if (resourceCenters.Count == 0) return false;
-                
-                if ((unitType == Units.COMMAND_CENTER) || (unitType == Units.SUPPLY_DEPOT))
-                    return CanAfford(unitType);
-                
-                //we need supply depots for the following structures
-                var depots = GetUnits(Units.SupplyDepots, onlyCompleted:true);
-                if (depots.Count == 0) return false;
-                
-                if (unitType == Units.BARRACKS)
-                    return CanAfford(unitType);
+
+
+                return CanAfford(unitType);
             }
-            
+
             //it's an actual unit
-            else {                
+            else
+            {
                 //do we have enough supply?
-                var requiredSupply = Controller.gameData.Units[(int) unitType].FoodRequired;
+                var requiredSupply = Controller.gameData.Units[(int)unitType].FoodRequired;
                 if (requiredSupply > (maxSupply - currentSupply))
                     return false;
 
                 //do we construct the units from barracks? 
-                if (Units.FromBarracks.Contains(unitType)) {
-                    var barracks = GetUnits(Units.BARRACKS, onlyCompleted:true);
-                    if (barracks.Count == 0) return false;
-                }
-                                
+
+                if (!IsTechAvailable(unitType))
+                    return false;
             }
-            
             return CanAfford(unitType);
         }
 
-        public static Action CreateRawUnitCommand(int ability) {
+		private static bool IsTechAvailable(uint unitType)
+		{
+            if (unitType == Units.DRONE)
+                return GetUnits(Units.LARVA, onlyCompleted: true).Count > 0;
+            if (unitType == Units.OVERLORD)
+                return GetUnits(Units.LARVA, onlyCompleted: true).Count > 0;
+            if (unitType == Units.ZERGLING)
+                return GetUnits(Units.SPAWNING_POOL, onlyCompleted: true).Count > 0;
+            else throw new NotImplementedException();
+
+        }
+
+		public static Action CreateRawUnitCommand(int ability) {
             var action = new Action();
             action.ActionRaw = new ActionRaw();
             action.ActionRaw.UnitCommand = new ActionRawUnitCommand();
@@ -318,7 +343,7 @@ namespace Bot {
         public static Unit GetAvailableWorker(Vector3 targetPosition) {
             var workers = GetUnits(Units.Workers);
             foreach (var worker in workers) {
-                if (worker.order.AbilityId != Abilities.GATHER_MINERALS) continue;
+              //  if (worker.order.AbilityId != Abilities.GATHER_MINERALS) continue;
                                 
                 return worker;
             }
