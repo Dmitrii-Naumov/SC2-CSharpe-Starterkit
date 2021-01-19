@@ -25,8 +25,6 @@ namespace Bot {
 			Macro();
 
 
-
-			//build up to 4 barracks at once
 			if (Controller.CanConstruct(Units.SPAWNING_POOL))
 				if (Controller.GetTotalCount(Units.SPAWNING_POOL) < 1)
 					Controller.Construct(Units.SPAWNING_POOL);

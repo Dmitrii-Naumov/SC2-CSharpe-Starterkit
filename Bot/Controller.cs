@@ -162,9 +162,22 @@ namespace Bot {
         {
             switch (unitType)
             {
+                //T1
                 case Units.DRONE: return Abilities.LARVATRAIN_DRONE;
                 case Units.OVERLORD: return Abilities.LARVATRAIN_OVERLORD;
                 case Units.ZERGLING: return Abilities.LARVATRAIN_ZERGLING;
+                case Units.ROACH: return Abilities.LARVATRAIN_ROACH;
+
+                //T2
+                case Units.MUTALISK: return Abilities.LARVATRAIN_MUTALISK;
+                case Units.HYDRALISK: return Abilities.LARVATRAIN_HYDRALISK;
+                case Units.CORRUPTOR: return Abilities.LARVATRAIN_ROACH;
+                case Units.INFESTOR: return Abilities.LARVATRAIN_MUTALISK;
+                case Units.SWARMHOSTMP: return Abilities.LARVATRAIN_SWARMHOST;
+
+                //T3
+                case Units.VIPER: return Abilities.LARVATRAIN_VIPER;
+                case Units.ULTRALISK: return Abilities.LARVATRAIN_ULTRALISK;
                 default: throw new NotImplementedException();
             }
         }
