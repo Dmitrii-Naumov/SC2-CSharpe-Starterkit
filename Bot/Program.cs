@@ -13,7 +13,7 @@ namespace Bot {
 //        private static string mapName = "FrostLE.SC2Map";
         private static readonly string mapName = "DiscoBloodbathLE.SC2Map";
 
-        private static readonly Race opponentRace = Race.Random;
+        private static readonly Race opponentRace = Race.Protoss;
         private static readonly Difficulty opponentDifficulty = Difficulty.Medium;
 
         public static GameConnection gc;

@@ -47,8 +47,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Auxiliary\Command.cs" />
+    <Compile Include="Auxiliary\CommandWithCondition.cs" />
+    <Compile Include="Auxiliary\Condition.cs" />
+    <Compile Include="Auxiliary\BuildOrder.cs" />
+    <Compile Include="BeholderBot\Debut_12Pool.cs" />
+    <Compile Include="BeholderBot\Debut_ProxyHatch.cs" />
     <Compile Include="Constants\Abilities.cs" />
-    <Compile Include="Controller.cs" />
+    <Compile Include="Auxiliary\Controller.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Protocol\Common.cs" />
@@ -61,7 +67,7 @@
     <Compile Include="Protocol\Score.cs" />
     <Compile Include="Protocol\Spatial.cs" />
     <Compile Include="Protocol\Ui.cs" />
-    <Compile Include="BeholderBot.cs" />
+    <Compile Include="BeholderBot\BeholderBot.cs" />
     <Compile Include="Unit.cs" />
     <Compile Include="Wrapper\Interface.cs" />
     <Compile Include="Wrapper\CommandLine.cs" />
