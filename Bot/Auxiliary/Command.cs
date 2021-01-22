@@ -17,6 +17,20 @@
 			return Controller.BuildUnit(UnitToBuild);
 		}
 	}
+	public class ExpandCommand : Command
+	{
+
+		public override bool Execute()
+		{
+
+			if (Controller.CanConstruct(Units.HATCHERY))
+			{
+				Controller.Construct(Units.HATCHERY);
+				return true;
+			}
+			return false;
+		}
+	}
 	public class ConstructSingleCommand : Command
 	{
 		private uint BuildingToConstruct;

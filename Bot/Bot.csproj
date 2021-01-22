@@ -51,10 +51,13 @@
     <Compile Include="Auxiliary\CommandWithCondition.cs" />
     <Compile Include="Auxiliary\Condition.cs" />
     <Compile Include="Auxiliary\BuildOrder.cs" />
+    <Compile Include="Auxiliary\ToHasSet.cs" />
+    <Compile Include="BeholderBot\Debut_17Hatch.cs" />
     <Compile Include="BeholderBot\Debut_12Pool.cs" />
     <Compile Include="BeholderBot\Debut_ProxyHatch.cs" />
     <Compile Include="Constants\Abilities.cs" />
     <Compile Include="Auxiliary\Controller.cs" />
+    <Compile Include="Constants\Buffs.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Protocol\Common.cs" />
@@ -74,7 +77,6 @@
     <Compile Include="Wrapper\GameConnection.cs" />
     <Compile Include="Wrapper\ProtobufProxy.cs" />
     <Compile Include="Constants\Units.cs" />
-    <Compile Include="RaxBot.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

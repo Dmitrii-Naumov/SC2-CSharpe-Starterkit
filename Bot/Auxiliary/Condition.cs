@@ -11,6 +11,20 @@
 			return true;
 		}
 	}
+	public class UnitsCondition : Condition
+	{
+		uint UnitType;
+		int Qty;
+		public UnitsCondition(uint unitType, int qty)
+		{
+			Qty = qty;
+			UnitType = unitType;
+		}
+		public override bool IsTrue()
+		{
+			return Controller.GetUnits(UnitType).Count >= Qty;
+		}
+	}
 	public class MinSupplyCondition : Condition
 	{
 		public MinSupplyCondition(int minSupply)

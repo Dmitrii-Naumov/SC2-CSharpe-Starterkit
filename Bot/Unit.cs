@@ -1,64 +1,73 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using Google.Protobuf.Collections;
 using SC2APIProtocol;
 
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace Bot {
+namespace Bot
+{
+    [DebuggerDisplay("{Name} - ({Position.X},{Position.Y})")]
     public class Unit {
-        private SC2APIProtocol.Unit original;
-        private UnitTypeData unitTypeData;
+        private SC2APIProtocol.Unit Original;
+        private UnitTypeData UnitTypeData;
 
-        public string name;
-        public uint unitType;
-        public float integrity;
-        public Vector3 position;
-        public ulong tag;
-        public float buildProgress;
-        public UnitOrder order;
-        public RepeatedField<UnitOrder> orders;
-        public int supply;
-        public bool isVisible;
-        public int idealWorkers;
-        public int assignedWorkers;
+        public string Name;
+        public uint UnitType;
+        public float Integrity;
+        public Vector3 Position;
+        public ulong Tag;
+        public float BuildProgress;
+        public UnitOrder Order;
+        public RepeatedField<UnitOrder> Orders;
+        public int Supply;
+        public bool IsVisible;
+        public int IdealWorkers;
+        public int AssignedWorkers;
+        public int Energy;
+        public int MaxEnergy;
+        public bool IsInjected;
 
         public Unit(SC2APIProtocol.Unit unit) {
-            this.original = unit;
-            this.unitTypeData = Controller.gameData.Units[(int) unit.UnitType];
+            this.Original = unit;
+            this.UnitTypeData = Controller.gameData.Units[(int) unit.UnitType];
 
-            this.name = unitTypeData.Name;
-            this.tag = unit.Tag;
-            this.unitType = unit.UnitType;
-            this.position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
-            this.integrity = (unit.Health + unit.Shield) / (unit.HealthMax + unit.ShieldMax);
-            this.buildProgress = unit.BuildProgress;
-            this.idealWorkers = unit.IdealHarvesters;
-            this.assignedWorkers = unit.AssignedHarvesters;
+            this.Name = UnitTypeData.Name;
+            this.Tag = unit.Tag;
+            this.UnitType = unit.UnitType;
+            this.Position = new Vector3(unit.Pos.X, unit.Pos.Y, unit.Pos.Z);
+            this.Integrity = (unit.Health + unit.Shield) / (unit.HealthMax + unit.ShieldMax);
+            this.BuildProgress = unit.BuildProgress;
+            this.IdealWorkers = unit.IdealHarvesters;
+            this.AssignedWorkers = unit.AssignedHarvesters;
             
-            this.order = unit.Orders.Count > 0 ? unit.Orders[0] : new UnitOrder();
-            this.orders = unit.Orders;
-            this.isVisible = (unit.DisplayType == DisplayType.Visible);
+            this.Order = unit.Orders.Count > 0 ? unit.Orders[0] : new UnitOrder();
+            this.Orders = unit.Orders;
+            this.IsVisible = (unit.DisplayType == DisplayType.Visible);
 
-            this.supply = (int) unitTypeData.FoodRequired;
-        }                        
-        
-        
+            this.Supply = (int) UnitTypeData.FoodRequired;
+            this.Energy = (int)unit.Energy;
+            this.Energy = (int)unit.EnergyMax;
+            this.IsInjected = unit.BuffIds.Contains(Buffs.QUEENSPAWNLARVATIMER);
+        }
+
+
         public double GetDistance(Unit otherUnit) {
-            return Vector3.Distance(position, otherUnit.position);
+            return Vector3.Distance(Position, otherUnit.Position);
         }
 
         public double GetDistance(Vector3 location) {
-            return Vector3.Distance(position, location);
+            return Vector3.Distance(Position, location);
         }
         
         public void Train(uint unitType, bool queue=false) {            
-            if (!queue && orders.Count > 0)
+            if (!queue && Orders.Count > 0)
                 return;            
 
             var abilityID = Abilities.GetID(unitType);            
             var action = Controller.CreateRawUnitCommand(abilityID);
-            action.ActionRaw.UnitCommand.UnitTags.Add(tag);
+            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
             Controller.AddAction(action);
 
             var targetName = Controller.GetUnitName(unitType);
@@ -70,9 +79,9 @@ namespace Bot {
             action.ActionRaw = new ActionRaw();
             action.ActionRaw.CameraMove = new ActionRawCameraMove();
             action.ActionRaw.CameraMove.CenterWorldSpace = new Point();
-            action.ActionRaw.CameraMove.CenterWorldSpace.X = position.X;
-            action.ActionRaw.CameraMove.CenterWorldSpace.Y = position.Y;
-            action.ActionRaw.CameraMove.CenterWorldSpace.Z = position.Z;            
+            action.ActionRaw.CameraMove.CenterWorldSpace.X = Position.X;
+            action.ActionRaw.CameraMove.CenterWorldSpace.Y = Position.Y;
+            action.ActionRaw.CameraMove.CenterWorldSpace.Z = Position.Z;            
             Controller.AddAction(action);
         }
         
@@ -82,14 +91,14 @@ namespace Bot {
             action.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D();
             action.ActionRaw.UnitCommand.TargetWorldSpacePos.X = target.X;
             action.ActionRaw.UnitCommand.TargetWorldSpacePos.Y = target.Y;
-            action.ActionRaw.UnitCommand.UnitTags.Add(tag);
+            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
             Controller.AddAction(action);
         }
         
         public void Smart(Unit unit) {
             var action = Controller.CreateRawUnitCommand(Abilities.SMART);
-            action.ActionRaw.UnitCommand.TargetUnitTag = unit.tag;
-            action.ActionRaw.UnitCommand.UnitTags.Add(tag);
+            action.ActionRaw.UnitCommand.TargetUnitTag = unit.Tag;
+            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
             Controller.AddAction(action);
         }
 

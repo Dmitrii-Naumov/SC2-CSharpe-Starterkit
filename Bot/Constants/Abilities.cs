@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace Bot {
-    internal static class Abilities {
+namespace Bot
+{
+    internal static class Abilities
+    {
         //you can get all these values from the stableid.json file (just search for it on your PC)
 
         public static int RESEARCH_BANSHEE_CLOAK = 790;
@@ -60,6 +62,11 @@ namespace Bot {
         public static int LARVATRAIN_CORRUPTOR = 1353;
         public static int LARVATRAIN_VIPER = 1354;
         public static int LARVATRAIN_SWARMHOST = 1356;
+
+
+        public static int EFFECT_INJECTLARVA = 251;
+        public static int BUILD_CREEPTUMOR_QUEEN = 1694;
+        public static int BUILD_CREEPTUMOR_TUMOR = 1733;
 
         public static int GetID(uint unit)
         {

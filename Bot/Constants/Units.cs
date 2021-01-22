@@ -1,7 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using static Bot.Auxiliary.Extensions;
 
-namespace Bot {
-    internal static class Units {
+namespace Bot
+{
+    internal static class Units
+    {
         public const uint COLOSSUS = 4;
         public const uint TECHLAB = 5;
         public const uint REACTOR = 6;
@@ -658,8 +662,8 @@ namespace Bot {
             MOTHERSHIP,
             MUTALISK,
             PHOENIX,
-            QUEEN,
-            QUEEN_BURROWED,
+            //QUEEN,
+            //QUEEN_BURROWED,
             RAVEN,
             REAPER,
             ROACH,
@@ -706,6 +710,7 @@ namespace Bot {
             BATTLE_STATION_MINERAL_FIELD_750
         };
 
+
         public static readonly HashSet<uint> GasGeysers = new HashSet<uint> {
             VESPENE_GEYSER,
             SPACE_PLATFORM_GEYSER,
@@ -717,6 +722,9 @@ namespace Bot {
             ASSIMILATOR,
             REFINERY
         };
+
+
+        public static readonly HashSet<uint> ResourceField = MineralFields.Concat(GasGeysers).ToHashSet();
 
         public static readonly HashSet<uint> Workers = new HashSet<uint> {
             SCV,
@@ -808,7 +816,7 @@ namespace Bot {
             STARPORT_TECHLAB,
             STARPORT_REACTOR
         };
-        
+
         public static readonly HashSet<uint> SupplyDepots = new HashSet<uint> {
             SUPPLY_DEPOT,
             SUPPLY_DEPOT_LOWERED

@@ -4,11 +4,13 @@ using SC2APIProtocol;
 namespace Bot {
     internal class BeholderBot : Bot {
 
-		public BuildOrder CurrentDebut = new Debut_12Pool(); // new Debut_ProxyHatch();// new Debut_12Pool();
+		public BuildOrder CurrentDebut = new Debut_17Hatch(); // new Debut_ProxyHatch();// new Debut_12Pool();
+		//public Command CurrentPrimaryCommand =
+		//public Command CurrentSecondaryCommand = 
 
-        //the following will be called every frame
-        //you can increase the amount of frames that get processed for each step at once in Wrapper/GameConnection.cs: stepSize  
-        public IEnumerable<Action> OnFrame()
+		//the following will be called every frame
+		//you can increase the amount of frames that get processed for each step at once in Wrapper/GameConnection.cs: stepSize  
+		public IEnumerable<Action> OnFrame()
 		{
 			Controller.OpenFrame();
 
@@ -130,7 +132,7 @@ namespace Bot {
 			if (structures.Count == 1)
 			{
 				//last building                
-				if (structures[0].integrity < 0.4) //being attacked or burning down                 
+				if (structures[0].Integrity < 0.4) //being attacked or burning down                 
 					if (!Controller.chatLog.Contains("gg"))
 						Controller.Chat("gg");
 			}

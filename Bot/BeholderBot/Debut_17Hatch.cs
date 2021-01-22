@@ -6,18 +6,26 @@ using System.Threading.Tasks;
 
 namespace Bot
 {
-	public class Debut_12Pool : BuildOrder
+	public class Debut_17Hatch : BuildOrder
 	{
-		public Debut_12Pool()
+		public Debut_17Hatch()
 		{
-			AbortCondition = new MinSupplyCondition(19);
+			AbortCondition = new MinSupplyCondition(25);
 
 			BO = new Queue<CommandWithCondition>();
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructSingleCommand(Units.SPAWNING_POOL)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.OVERLORD)));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructSingleCommand(Units.SPAWNING_POOL)));
+
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructSingleCommand(Units.SPAWNING_POOL)));
+
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.ZERGLING)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.ZERGLING)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.ZERGLING)));
