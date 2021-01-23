@@ -51,6 +51,7 @@
     <Compile Include="Auxiliary\CommandWithCondition.cs" />
     <Compile Include="Auxiliary\Condition.cs" />
     <Compile Include="Auxiliary\BuildOrder.cs" />
+    <Compile Include="Auxiliary\MapInfo.cs" />
     <Compile Include="Auxiliary\ToHasSet.cs" />
     <Compile Include="BeholderBot\Debut_17Hatch.cs" />
     <Compile Include="BeholderBot\Debut_12Pool.cs" />

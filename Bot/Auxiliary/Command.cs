@@ -22,11 +22,9 @@
 
 		public override bool Execute()
 		{
-
 			if (Controller.CanConstruct(Units.HATCHERY))
 			{
-				Controller.Construct(Units.HATCHERY);
-				return true;
+				return Controller.Expand();
 			}
 			return false;
 		}
@@ -82,6 +80,19 @@
 				}
 			}
 			return false;
+		}
+	}
+	public class TalkCommand : Command
+	{
+		private string Message;
+		public TalkCommand(string message)
+		{
+			Message = message;
+		}
+		public override bool Execute()
+		{
+			Controller.Chat(Message);
+			return true;
 		}
 	}
 }

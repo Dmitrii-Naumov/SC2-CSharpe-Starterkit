@@ -5,6 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Threading;
+using Bot.Auxiliary;
 using SC2APIProtocol;
 using Action = SC2APIProtocol.Action;
 
@@ -125,21 +126,38 @@ namespace Bot {
         }
         private static bool IsTechAvailable(uint unitType)
         {
-            if (unitType == Units.DRONE)
-                return GetUnits(Units.LARVA, onlyCompleted: true).Count > 0;
-            if (unitType == Units.OVERLORD)
-                return GetUnits(Units.LARVA, onlyCompleted: true).Count > 0;
-            if (unitType == Units.ZERGLING)
-                return GetUnits(Units.SPAWNING_POOL, onlyCompleted: true).Count > 0;
-            else throw new NotImplementedException();
+            switch (unitType)
+            {
+                case Units.DRONE:
+                    return GetUnits(Units.LARVA, onlyCompleted: true).Count > 0;
+                case Units.OVERLORD:
+                    return GetUnits(Units.LARVA, onlyCompleted: true).Count > 0;
+                case Units.ZERGLING:
+                    return GetUnits(Units.SPAWNING_POOL, onlyCompleted: true).Count > 0;
+                case Units.QUEEN:
+                    return GetUnits(Units.SPAWNING_POOL, onlyCompleted: true).Count > 0;
+                default: throw new NotImplementedException();
+            }
 
         }
-		#endregion
-		#endregion
+        private static List<Vector3> GetPointsInRadius(Vector3 value, int maxRadius)
+        {
+            List<Vector3> result = new List<Vector3>();
+            for (int i = 0; i < maxRadius; i++)
+            {
+                for (int j = 0; j < maxRadius; j++)
+                {
+                    result.Add(new Vector3(value.X - (maxRadius / 2) + i, value.Y - (maxRadius / 2) + j, value.Z));
+                }
+            }
+            return result;
+        }
+        #endregion
+        #endregion
 
-		#region Public Methods
-		#region Not Gameplay Actions
-		public static void Pause()
+        #region Public Methods
+        #region Not Gameplay Actions
+        public static void Pause()
         {
             Console.WriteLine("Press any key to continue...");
             while (Console.ReadKey().Key != ConsoleKey.Enter)
@@ -182,6 +200,19 @@ namespace Bot {
             AddAction(action);
         }
 
+        internal static double GetPathDistance(Vector3 location, Vector3 position)
+        {
+            return Vector3.Distance(location, position);
+
+        }
+        public static void Inject(List<Unit> units, Unit target)
+        {
+            var action = CreateRawUnitCommand(Abilities.EFFECT_INJECTLARVA);
+            action.ActionRaw.UnitCommand.TargetUnitTag = target.Tag;
+            foreach (var unit in units)
+                action.ActionRaw.UnitCommand.UnitTags.Add(unit.Tag);
+            AddAction(action);
+        }
 
         public static int GetTotalCount(uint unitType)
         {
@@ -221,6 +252,11 @@ namespace Bot {
             }
 
             return counter;
+        }
+
+        public static List<Unit> GetHatcheries()
+        {
+            return Controller.GetUnits(new HashSet<uint>() { Units.HATCHERY, Units.LAIR, Units.HIVE });
         }
 
         /// <summary>
@@ -317,7 +353,39 @@ namespace Bot {
         {
             return Controller.GetUnits(Units.LARVA).FirstOrDefault();
         }
-
+        public static bool BuildUnit(uint unitType)
+        {
+            if (Controller.CanConstruct(unitType))
+            {
+                if (unitType == Units.QUEEN)
+                {
+                    var rcs = Controller.GetUnits(
+                        new HashSet<uint>() { Units.HATCHERY, Units.LAIR, Units.HIVE },
+                        onlyCompleted: true);
+                    foreach (var rc in rcs)
+                    {
+                        if (Controller.CanConstruct(unitType) && rc.Orders.Count == 0)
+                        {
+                            rc.Train(unitType);
+                            return true;
+                        }
+                    }
+                }
+                else
+                {
+                    var larvae = Controller.GetUnits(Units.LARVA);
+                    foreach (var larva in larvae)
+                    {
+                        if (Controller.CanConstruct(unitType) && larva.Orders.Count == 0)
+                        {
+                            larva.Train(unitType);
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
         public static bool CanConstruct(uint unitType)
         {
             //is it a structure?
@@ -372,6 +440,11 @@ namespace Bot {
 
         public static void DistributeWorkers()
         {
+            //TODO priority saturation gas vs minerals
+            //consider long distance mining
+            // 3 workers can be put on crystals that are further and 2 should be on closer ones
+            // only mine from crystals/geysers that are safe
+
             var workers = GetUnits(Units.Workers);
             List<Unit> idleWorkers = new List<Unit>();
             foreach (var worker in workers)
@@ -440,6 +513,9 @@ namespace Bot {
             var workers = GetUnits(Units.Workers);
             foreach (var worker in workers)
             {
+                // TODO: select closer worker 
+                // TODO: select worker who is not currently gathering/carrying mineral/scouting
+
                 //  if (worker.order.AbilityId != Abilities.GATHER_MINERALS) continue;
 
                 return worker;
@@ -465,55 +541,173 @@ namespace Bot {
             return null;
         }
 
-        public static void Construct(uint unitType)
-        {
-            Vector3 startingSpot;
+        public static MapInfo CurrentMap=new MapInfo();
 
-            var resourceCenters = GetUnits(Units.ResourceCenters);
-            if (resourceCenters.Count > 0)
-                startingSpot = resourceCenters[0].Position;
+        public static bool IsInRangeOfResource(Vector3 resourceFieldPosition, Vector3 unitPostion)
+        {
+            return Math.Round(unitPostion.Z) == Math.Round(resourceFieldPosition.Z)
+                                    && Vector3.DistanceSquared(unitPostion, resourceFieldPosition) < SquaredDistanceExpandToResourceField;
+        }
+
+        private const int SquaredDistanceExpandToResourceField = 260;
+
+        public static List<Vector3> GetExpandLocations()
+        {
+            if (CurrentMap.ExpandLocations != null && CurrentMap.ExpandLocations.Count != 0)
+                return CurrentMap.ExpandLocations;
+
+            //   var geysers= GetUnits(Units.GasGeysers);
+            //    var mineralPatches = GetUnits(Units.MineralFields);
+            var allResources = Controller.GetUnits(Units.ResourceField, alliance: Alliance.Neutral);
+
+            List<List<Unit>> groups = new List<List<Unit>>();
+            foreach (var resourceField in allResources)
+            {
+                bool found = false;
+                foreach (var group in groups)
+                {
+                    if (group.Count > 0 && IsInRangeOfResource(resourceField.Position, group[0].Position))
+                    {
+                        group.Add(resourceField);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    groups.Add(new List<Unit>() { resourceField });
+            }
+            List<Vector3> expandLocations = new List<Vector3>();
+            foreach (var group in groups)
+            {
+                Vector3 center = new Vector3();
+                foreach (var location in group)
+                {
+                    center += location.Position;
+                }
+                center /= group.Count;
+                expandLocations.Add(center);
+            }
+            CurrentMap.ExpandLocations = expandLocations;
+            return CurrentMap.ExpandLocations;
+        }
+        public static bool Expand()
+        {
+            double mindistance = 99999999;
+            double minAlloweddistance = 10;
+            Vector3? expandPosition = null;
+            foreach (var location in GetExpandLocations())
+            {
+                double distance = Controller.GetPathDistance(location, GetHatcheries()[0].Position);
+                bool alreadyHaveHatch = false;
+                foreach (var hatch in GetHatcheries())
+                {
+                    if (Controller.GetPathDistance(location, hatch.Position) < minAlloweddistance)
+                    {
+                        alreadyHaveHatch = true;
+                        break;
+                    }
+                }
+
+                if (distance < mindistance && !alreadyHaveHatch)
+                {
+                    mindistance = distance;
+                    expandPosition = location;
+                }
+            }
+            if (expandPosition != null)
+            {
+               if( Controller.Construct(Units.HATCHERY, expandPosition));
+                {
+                    Logger.Info("Expanding");
+                    return true;
+                }
+                return false;
+            }
             else
             {
-                Logger.Error("Unable to construct: {0}. No resource center was found.", GetUnitName(unitType));
-                return;
+                Logger.Error("All expands are already taken");
+                return false;
             }
 
-            const int radius = 12;
-
-            //trying to find a valid construction spot
-            var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
-            Vector3 constructionSpot;
-            while (true)
+        }
+        public static bool Construct(uint unitType, Vector3? constructionSpot = null)
+        {
+            if (constructionSpot == null)
             {
-                constructionSpot = new Vector3(startingSpot.X + random.Next(-radius, radius + 1), startingSpot.Y + random.Next(-radius, radius + 1), 0);
+                Vector3 startingSpot;
+                var resourceCenters = GetUnits(Units.ResourceCenters);
+                if (resourceCenters.Count > 0)
+                    startingSpot = resourceCenters[0].Position;
+                else
+                {
+                    Logger.Error("Unable to construct: {0}. No resource center was found.", GetUnitName(unitType));
+                    return false;
+                }
 
-                //avoid building in the mineral line
-                if (IsInRange(constructionSpot, mineralFields, 5)) continue;
 
-                //check if the building fits
-                if (!CanPlace(unitType, constructionSpot)) continue;
+                const int radius = 12;
 
-                //ok, we found a spot
-                break;
+                //trying to find a valid construction spot
+                var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
+
+                while (true)
+                {
+                    constructionSpot = new Vector3(startingSpot.X + random.Next(-radius, radius + 1), startingSpot.Y + random.Next(-radius, radius + 1), 0);
+
+                    //avoid building in the mineral line
+                    if (IsInRange(constructionSpot.Value, mineralFields, 5)) continue;
+
+                    //check if the building fits
+                    if (!CanPlace(unitType, constructionSpot.Value)) continue;
+
+                    //ok, we found a spot
+                    break;
+                }
+            }
+            else
+            {
+                if (!CanPlace(unitType, constructionSpot.Value))
+                {
+                    int maxRadius = 11;
+
+                    List<Vector3> points = GetPointsInRadius(constructionSpot.Value, maxRadius);
+                    bool foundSpot = false;
+                    foreach (var point in points)
+                    {
+                        if (CanPlace(unitType, point))
+                        {
+                            constructionSpot = point;
+                            foundSpot = true;
+                            break;
+                        }
+                    }
+                    if (!foundSpot)
+                    {
+                        Logger.Error("Unable to construct a {0} building here", GetUnitName(unitType));
+                        return false;
+                    }
+                }
             }
 
-            var worker = GetAvailableWorker(constructionSpot);
+            var worker = GetAvailableWorker(constructionSpot.Value);
             if (worker == null)
             {
                 Logger.Error("Unable to find worker to construct: {0}", GetUnitName(unitType));
-                return;
+                return false;
             }
 
             var abilityID = Abilities.GetID(unitType);
             var constructAction = CreateRawUnitCommand(abilityID);
             constructAction.ActionRaw.UnitCommand.UnitTags.Add(worker.Tag);
             constructAction.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D();
-            constructAction.ActionRaw.UnitCommand.TargetWorldSpacePos.X = constructionSpot.X;
-            constructAction.ActionRaw.UnitCommand.TargetWorldSpacePos.Y = constructionSpot.Y;
+            constructAction.ActionRaw.UnitCommand.TargetWorldSpacePos.X = constructionSpot.Value.X;
+            constructAction.ActionRaw.UnitCommand.TargetWorldSpacePos.Y = constructionSpot.Value.Y;
             AddAction(constructAction);
 
-            Logger.Info("Constructing: {0} @ {1} / {2}", GetUnitName(unitType), constructionSpot.X, constructionSpot.Y);
+            Logger.Info("Constructing: {0} @ {1} / {2}", GetUnitName(unitType), constructionSpot.Value.X, constructionSpot.Value.Y);
+            return true;
         }
+
 
         #endregion
         #endregion
