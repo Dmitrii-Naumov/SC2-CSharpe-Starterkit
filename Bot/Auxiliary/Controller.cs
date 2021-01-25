@@ -86,7 +86,7 @@ namespace Bot {
             return actions;
         }
 
-        public static Action CreateRawUnitCommand(int ability)
+        private static Action CreateRawUnitCommand(int ability)
         {
             var action = new Action();
             action.ActionRaw = new ActionRaw();
@@ -95,7 +95,22 @@ namespace Bot {
             return action;
         }
 
-        public static void AddAction(Action action)
+        private static Point2D VectorToPoint(Vector3 vector)
+        {
+            var point= new Point2D();
+            point.X = vector.X;
+            point.Y = vector.Y;
+            return point;
+        }
+
+        private static void AddUnitTagsToAction(List<Unit> units, Action action)
+        {
+            foreach (var unit in units)
+                action.ActionRaw.UnitCommand.UnitTags.Add(unit.Tag);
+        }
+
+
+        private static void AddAction(Action action)
         {
             actions.Add(action);
         }
@@ -186,32 +201,73 @@ namespace Bot {
         {
             return gameData.Units[(int)unitType].Name;
         }
+
+        public static void FocusCamera(Vector3 Position)
+        {
+            var action = new Action();
+            action.ActionRaw = new ActionRaw();
+            action.ActionRaw.CameraMove = new ActionRawCameraMove();
+            action.ActionRaw.CameraMove.CenterWorldSpace = new Point();
+            action.ActionRaw.CameraMove.CenterWorldSpace.X = Position.X;
+            action.ActionRaw.CameraMove.CenterWorldSpace.Y = Position.Y;
+            action.ActionRaw.CameraMove.CenterWorldSpace.Z = Position.Z;
+            Controller.AddAction(action);
+        }
         #endregion
 
         #region Gameplay Actions
+        #region Unit Commands
+        public static void Move(List<Unit> units, Vector3 target)
+        {
+            var action = Controller.CreateRawUnitCommand(Abilities.MOVE);
+            action.ActionRaw.UnitCommand.TargetWorldSpacePos = VectorToPoint(target);
+            AddUnitTagsToAction(units, action);
+            Controller.AddAction(action);
+        }
+
+        public static void Smart(List<Unit> units, Unit target)
+        {
+            var action = Controller.CreateRawUnitCommand(Abilities.SMART);
+            action.ActionRaw.UnitCommand.TargetUnitTag = target.Tag;
+            AddUnitTagsToAction(units, action);
+            Controller.AddAction(action);
+        }
+
+        public static void Train(Unit producingStructure, uint unitType, bool queue = false)
+        {
+            if (!queue && producingStructure.Orders.Count > 0)
+                return;
+
+            var abilityID = Abilities.GetID(unitType);
+            var action = Controller.CreateRawUnitCommand(abilityID);
+            action.ActionRaw.UnitCommand.UnitTags.Add(producingStructure.Tag);
+            Controller.AddAction(action);
+
+            var targetName = Controller.GetUnitName(unitType);
+            Logger.Info("Started training: {0}", targetName);
+        }
+
         public static void Attack(List<Unit> units, Vector3 target)
-        {
-            var action = CreateRawUnitCommand(Abilities.ATTACK);
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D();
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos.X = target.X;
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos.Y = target.Y;
-            foreach (var unit in units)
-                action.ActionRaw.UnitCommand.UnitTags.Add(unit.Tag);
-            AddAction(action);
-        }
+		{
+			var action = CreateRawUnitCommand(Abilities.ATTACK);
 
-        internal static double GetPathDistance(Vector3 location, Vector3 position)
-        {
-            return Vector3.Distance(location, position);
+			action.ActionRaw.UnitCommand.TargetWorldSpacePos = VectorToPoint(target);
+			AddUnitTagsToAction(units, action);
+			AddAction(action);
+		}
 
-        }
-        public static void Inject(List<Unit> units, Unit target)
+		public static void Inject(List<Unit> units, Unit target)
         {
             var action = CreateRawUnitCommand(Abilities.EFFECT_INJECTLARVA);
             action.ActionRaw.UnitCommand.TargetUnitTag = target.Tag;
-            foreach (var unit in units)
-                action.ActionRaw.UnitCommand.UnitTags.Add(unit.Tag);
+            AddUnitTagsToAction(units, action);
             AddAction(action);
+        }
+        #endregion
+
+        public static double GetPathDistance(Vector3 location, Vector3 position)
+        {
+            return Vector3.Distance(location, position);
         }
 
         public static int GetTotalCount(uint unitType)
@@ -353,6 +409,7 @@ namespace Bot {
         {
             return Controller.GetUnits(Units.LARVA).FirstOrDefault();
         }
+
         public static bool BuildUnit(uint unitType)
         {
             if (Controller.CanConstruct(unitType))
@@ -386,6 +443,7 @@ namespace Bot {
             }
             return false;
         }
+
         public static bool CanConstruct(uint unitType)
         {
             //is it a structure?
@@ -438,92 +496,6 @@ namespace Bot {
             return false;
         }
 
-        public static void DistributeWorkers()
-        {
-            //TODO priority saturation gas vs minerals
-            //consider long distance mining
-            // 3 workers can be put on crystals that are further and 2 should be on closer ones
-            // only mine from crystals/geysers that are safe
-
-            var workers = GetUnits(Units.Workers);
-            List<Unit> idleWorkers = new List<Unit>();
-            foreach (var worker in workers)
-            {
-                if (worker.Order.AbilityId != 0) continue;
-                idleWorkers.Add(worker);
-            }
-
-            if (idleWorkers.Count > 0)
-            {
-                var resourceCenters = GetUnits(Units.ResourceCenters, onlyCompleted: true);
-                var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
-
-                foreach (var rc in resourceCenters)
-                {
-                    //get one of the closer mineral fields
-                    var mf = GetFirstInRange(rc.Position, mineralFields, 7);
-                    if (mf == null) continue;
-
-                    //only one at a time
-                    Logger.Info("Distributing idle worker: {0}", idleWorkers[0].Tag);
-                    idleWorkers[0].Smart(mf);
-                    return;
-                }
-                //nothing to be done
-                return;
-            }
-            else
-            {
-                //let's see if we can distribute between bases                
-                var resourceCenters = GetUnits(Units.ResourceCenters, onlyCompleted: true);
-                Unit transferFrom = null;
-                Unit transferTo = null;
-                foreach (var rc in resourceCenters)
-                {
-                    if (rc.AssignedWorkers <= rc.IdealWorkers)
-                        transferTo = rc;
-                    else
-                        transferFrom = rc;
-                }
-
-                if ((transferFrom != null) && (transferTo != null))
-                {
-                    var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
-
-                    var sqrDistance = 7 * 7;
-                    foreach (var worker in workers)
-                    {
-                        if (worker.Order.AbilityId != Abilities.GATHER_MINERALS) continue;
-                        if (Vector3.DistanceSquared(worker.Position, transferFrom.Position) > sqrDistance) continue;
-
-                        var mf = GetFirstInRange(transferTo.Position, mineralFields, 7);
-                        if (mf == null) continue;
-
-                        //only one at a time
-                        Logger.Info("Distributing idle worker: {0}", worker.Tag);
-                        worker.Smart(mf);
-                        return;
-                    }
-                }
-            }
-        }
-
-        public static Unit GetAvailableWorker(Vector3? targetPosition = null)
-        {
-            var workers = GetUnits(Units.Workers);
-            foreach (var worker in workers)
-            {
-                // TODO: select closer worker 
-                // TODO: select worker who is not currently gathering/carrying mineral/scouting
-
-                //  if (worker.order.AbilityId != Abilities.GATHER_MINERALS) continue;
-
-                return worker;
-            }
-
-            return null;
-        }
-
         public static bool IsInRange(Vector3 targetPosition, List<Unit> units, float maxDistance)
         {
             return (GetFirstInRange(targetPosition, units, maxDistance) != null);
@@ -541,95 +513,12 @@ namespace Bot {
             return null;
         }
 
-        public static MapInfo CurrentMap=new MapInfo();
-
         public static bool IsInRangeOfResource(Vector3 resourceFieldPosition, Vector3 unitPostion)
         {
             return Math.Round(unitPostion.Z) == Math.Round(resourceFieldPosition.Z)
                                     && Vector3.DistanceSquared(unitPostion, resourceFieldPosition) < SquaredDistanceExpandToResourceField;
         }
 
-        private const int SquaredDistanceExpandToResourceField = 260;
-
-        public static List<Vector3> GetExpandLocations()
-        {
-            if (CurrentMap.ExpandLocations != null && CurrentMap.ExpandLocations.Count != 0)
-                return CurrentMap.ExpandLocations;
-
-            //   var geysers= GetUnits(Units.GasGeysers);
-            //    var mineralPatches = GetUnits(Units.MineralFields);
-            var allResources = Controller.GetUnits(Units.ResourceField, alliance: Alliance.Neutral);
-
-            List<List<Unit>> groups = new List<List<Unit>>();
-            foreach (var resourceField in allResources)
-            {
-                bool found = false;
-                foreach (var group in groups)
-                {
-                    if (group.Count > 0 && IsInRangeOfResource(resourceField.Position, group[0].Position))
-                    {
-                        group.Add(resourceField);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    groups.Add(new List<Unit>() { resourceField });
-            }
-            List<Vector3> expandLocations = new List<Vector3>();
-            foreach (var group in groups)
-            {
-                Vector3 center = new Vector3();
-                foreach (var location in group)
-                {
-                    center += location.Position;
-                }
-                center /= group.Count;
-                expandLocations.Add(center);
-            }
-            CurrentMap.ExpandLocations = expandLocations;
-            return CurrentMap.ExpandLocations;
-        }
-        public static bool Expand()
-        {
-            double mindistance = 99999999;
-            double minAlloweddistance = 10;
-            Vector3? expandPosition = null;
-            foreach (var location in GetExpandLocations())
-            {
-                double distance = Controller.GetPathDistance(location, GetHatcheries()[0].Position);
-                bool alreadyHaveHatch = false;
-                foreach (var hatch in GetHatcheries())
-                {
-                    if (Controller.GetPathDistance(location, hatch.Position) < minAlloweddistance)
-                    {
-                        alreadyHaveHatch = true;
-                        break;
-                    }
-                }
-
-                if (distance < mindistance && !alreadyHaveHatch)
-                {
-                    mindistance = distance;
-                    expandPosition = location;
-                }
-            }
-            if (expandPosition != null)
-            {
-               if( Controller.Construct(Units.HATCHERY, expandPosition));
-                {
-                    Logger.Info("Expanding");
-                    return true;
-                }
-                return false;
-            }
-            else
-            {
-                Logger.Error("All expands are already taken");
-                return false;
-            }
-
-        }
         public static bool Construct(uint unitType, Vector3? constructionSpot = null)
         {
             if (constructionSpot == null)
@@ -707,8 +596,6 @@ namespace Bot {
             Logger.Info("Constructing: {0} @ {1} / {2}", GetUnitName(unitType), constructionSpot.Value.X, constructionSpot.Value.Y);
             return true;
         }
-
-
         #endregion
         #endregion
     }

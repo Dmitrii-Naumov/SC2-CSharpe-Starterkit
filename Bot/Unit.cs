@@ -4,8 +4,6 @@ using System.Numerics;
 using Google.Protobuf.Collections;
 using SC2APIProtocol;
 
-// ReSharper disable MemberCanBePrivate.Global
-
 namespace Bot
 {
     [DebuggerDisplay("{Name} - ({Position.X},{Position.Y})")]
@@ -51,58 +49,5 @@ namespace Bot
             this.Energy = (int)unit.EnergyMax;
             this.IsInjected = unit.BuffIds.Contains(Buffs.QUEENSPAWNLARVATIMER);
         }
-
-
-        public double GetDistance(Unit otherUnit) {
-            return Vector3.Distance(Position, otherUnit.Position);
-        }
-
-        public double GetDistance(Vector3 location) {
-            return Vector3.Distance(Position, location);
-        }
-        
-        public void Train(uint unitType, bool queue=false) {            
-            if (!queue && Orders.Count > 0)
-                return;            
-
-            var abilityID = Abilities.GetID(unitType);            
-            var action = Controller.CreateRawUnitCommand(abilityID);
-            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
-            Controller.AddAction(action);
-
-            var targetName = Controller.GetUnitName(unitType);
-            Logger.Info("Started training: {0}", targetName);
-        }
-        
-        private void FocusCamera() {
-            var action = new Action();
-            action.ActionRaw = new ActionRaw();
-            action.ActionRaw.CameraMove = new ActionRawCameraMove();
-            action.ActionRaw.CameraMove.CenterWorldSpace = new Point();
-            action.ActionRaw.CameraMove.CenterWorldSpace.X = Position.X;
-            action.ActionRaw.CameraMove.CenterWorldSpace.Y = Position.Y;
-            action.ActionRaw.CameraMove.CenterWorldSpace.Z = Position.Z;            
-            Controller.AddAction(action);
-        }
-        
-        
-        public void Move(Vector3 target) {
-            var action = Controller.CreateRawUnitCommand(Abilities.MOVE);
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos = new Point2D();
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos.X = target.X;
-            action.ActionRaw.UnitCommand.TargetWorldSpacePos.Y = target.Y;
-            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
-            Controller.AddAction(action);
-        }
-        
-        public void Smart(Unit unit) {
-            var action = Controller.CreateRawUnitCommand(Abilities.SMART);
-            action.ActionRaw.UnitCommand.TargetUnitTag = unit.Tag;
-            action.ActionRaw.UnitCommand.UnitTags.Add(Tag);
-            Controller.AddAction(action);
-        }
-
-
-        
     }
 }

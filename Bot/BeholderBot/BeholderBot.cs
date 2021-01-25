@@ -2,14 +2,13 @@
 using SC2APIProtocol;
 using System.Linq;
 using System.Numerics;
+using Bot.Auxiliary;
 
 namespace Bot {
     public partial class BeholderBot : Bot 
 	{
-
-
 		#region state
-
+		public MapInfo CurrentMap = new MapInfo();
 		public BuildOrder CurrentDebut = new Debut_17Hatch(); // new Debut_ProxyHatch();// new Debut_12Pool();
 															  //public Command CurrentPrimaryCommand =
 															  //public Command CurrentSecondaryCommand = 
@@ -24,22 +23,26 @@ namespace Bot {
 		//List of Proxy Hatcheries
 		List<Unit> ProxyHatches;
 
+		/// <summary>
+		/// Defines if mining vespen a priority right now.  
+		/// </summary>
+		/// 
+		VespenPriority VespenMining;
+
+
 		#endregion
 
 		#region Methods
 
-		public void RefreshState()
-		{
-			RefreshHatcheries();
-		}
 
+	
 		//Updates List of hatcheries
 		public void RefreshHatcheries()
 		{
 			foreach (var hatch in Controller.GetHatcheries())
 			{
-				foreach (var expLocation in Controller.GetExpandLocations())
-					if (Controller.IsInRangeOfResource(expLocation, hatch.Position))
+				foreach (var expLocation in CurrentMap.GetExpandLocations())
+					if (MapInfo.IsInRangeOfResource(expLocation, hatch.Position))
 					{
 					}
 			}
