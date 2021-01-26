@@ -7,12 +7,13 @@ using SC2APIProtocol;
 
 namespace SC2_Connector
 {
-    [DebuggerDisplay("{Name} - ({Position.X},{Position.Y})")]
+    [DebuggerDisplay("{Name} {Tag} - ({Position.X},{Position.Y})")]
     public class Unit {
         private SC2APIProtocol.Unit Original;
         private UnitTypeData UnitTypeData;
 
         public string Name;
+        public Alliance Alliance;
         public uint UnitType;
         public float Integrity;
         public Vector3 Position;
@@ -49,6 +50,7 @@ namespace SC2_Connector
             this.Energy = (int)unit.Energy;
             this.Energy = (int)unit.EnergyMax;
             this.IsInjected = unit.BuffIds.Contains(Buffs.QUEENSPAWNLARVATIMER);
+            this.Alliance = unit.Alliance;
         }
 	}
 }

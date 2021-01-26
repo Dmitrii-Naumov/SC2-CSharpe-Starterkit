@@ -38,6 +38,7 @@ namespace SC2_Connector
             }
 
             actions.Clear();
+            PopulateUnits();
 
             foreach (var chat in obs.Chat)
                 ChatLog.Add(chat.Message);
@@ -68,6 +69,13 @@ namespace SC2_Connector
 
             if (frameDelay > 0)
                 Thread.Sleep(frameDelay);
+        }
+
+        private static void PopulateUnits()
+        {
+            ObservableUnits = new Dictionary<ulong, Unit>();
+            foreach (var unit in obs.Observation.RawData.Units)
+                ObservableUnits.Add(unit.Tag, new Unit(unit, Controller.gameData.Units[(int)unit.UnitType]));
         }
 
         public static List<Action> CloseFrame()
@@ -176,6 +184,8 @@ namespace SC2_Connector
 
         public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
         public static readonly List<string> ChatLog = new List<string>();
+
+        public static Dictionary<ulong, Unit> ObservableUnits;
         #endregion
 
         #region Not Gameplay Actions
@@ -361,23 +371,6 @@ namespace SC2_Connector
         }
         #endregion
 
-        public static float GetPathDistance(Vector3 location, Vector3 position)
-        {
-            //Does not work for some reason
-            RequestQueryPathing queryPathing = new RequestQueryPathing();
-            queryPathing.StartPos = VectorToPoint(location);
-            queryPathing.EndPos = VectorToPoint(position);
-
-            Request requestQuery = new Request();
-            requestQuery.Query = new RequestQuery();
-            requestQuery.Query.Pathing.Add(queryPathing);
-
-            var result = Connection.SendQuery(requestQuery.Query);
-            if (result.Result.Pathing.Count > 0)
-                return result.Result.Pathing[0].Distance;
-            return float.PositiveInfinity;
-        }
-
 		#region Get Unit Methods
 		public static int GetTotalCount(uint unitType)
         {
@@ -419,52 +412,33 @@ namespace SC2_Connector
             return counter;
         }
 
-      
-        // <TODO> : Refactor+Optimize
         public static Unit GetUnitByTag(ulong unitTag)
         {
-            foreach (var unit in obs.Observation.RawData.Units)
-                if (unit.Tag == unitTag)
-                {
-                    return new Unit(unit, gameData.Units[(int)unit.UnitType]);
-                }
+            if (ObservableUnits.ContainsKey(unitTag))
+                return ObservableUnits[unitTag];
             return null;
         }
 
         public static List<Unit> GetUnits(HashSet<uint> hashset, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false)
         {
-            //ideally this should be cached in the future and cleared at each new frame
             var units = new List<Unit>();
-            foreach (var unit in obs.Observation.RawData.Units)
+            foreach (var unit in ObservableUnits.Values)
                 if (hashset.Contains(unit.UnitType) && unit.Alliance == alliance)
                 {
                     if (onlyCompleted && unit.BuildProgress < 1)
                         continue;
 
-                    if (onlyVisible && (unit.DisplayType != DisplayType.Visible))
+                    if (onlyVisible && (!unit.IsVisible))
                         continue;
 
-                    units.Add(new Unit(unit, Controller.gameData.Units[(int)unit.UnitType]));
+                    units.Add(unit);
                 }
             return units;
         }
 
         public static List<Unit> GetUnits(uint unitType, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false)
         {
-            //ideally this should be cached in the future and cleared at each new frame
-            var units = new List<Unit>();
-            foreach (var unit in obs.Observation.RawData.Units)
-                if (unit.UnitType == unitType && unit.Alliance == alliance)
-                {
-                    if (onlyCompleted && unit.BuildProgress < 1)
-                        continue;
-
-                    if (onlyVisible && (unit.DisplayType != DisplayType.Visible))
-                        continue;
-
-                    units.Add(new Unit(unit, Controller.gameData.Units[(int)unit.UnitType]));
-                }
-            return units;
+            return GetUnits(new HashSet<uint>() { unitType }, alliance, onlyCompleted, onlyVisible);
         }
         // </TODO>
         public static Unit GetClosestLarva(Vector3? targetPosition = null)
@@ -638,6 +612,23 @@ namespace SC2_Connector
         public static bool IsInRange(Vector3 targetPosition, Unit unit, float maxDistance)
         {
             return (GetFirstInRange(targetPosition, unit, maxDistance) != null);
+        }
+
+        public static float GetPathDistance(Vector3 location, Vector3 position)
+        {
+            //Does not work for some reason
+            RequestQueryPathing queryPathing = new RequestQueryPathing();
+            queryPathing.StartPos = VectorToPoint(location);
+            queryPathing.EndPos = VectorToPoint(position);
+
+            Request requestQuery = new Request();
+            requestQuery.Query = new RequestQuery();
+            requestQuery.Query.Pathing.Add(queryPathing);
+
+            var result = Connection.SendQuery(requestQuery.Query);
+            if (result.Result.Pathing.Count > 0)
+                return result.Result.Pathing[0].Distance;
+            return float.PositiveInfinity;
         }
 
         #endregion
