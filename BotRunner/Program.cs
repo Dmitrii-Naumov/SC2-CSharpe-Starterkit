@@ -9,6 +9,7 @@ namespace BotRunner
     {
         // Settings for your bot.
         private static readonly Bot bot = new Beholder();
+        //private static readonly Bot bot = new RaxBot.RaxBot();
 
         // Settings for single player mode.
         //        private static string mapName = "AbyssalReefLE.SC2Map";
