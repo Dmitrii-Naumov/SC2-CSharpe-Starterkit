@@ -51,7 +51,6 @@
     <Compile Include="Auxiliary\Condition.cs" />
     <Compile Include="Auxiliary\Enums.cs" />
     <Compile Include="Auxiliary\GameplayTask.cs" />
-    <Compile Include="Auxiliary\MapInfo.cs" />
     <Compile Include="BeholderBot\BeholderBot.cs" />
     <Compile Include="BeholderBot\BeholderBot_Auxiliary.cs" />
     <Compile Include="BeholderBot\Debut_12Pool.cs" />

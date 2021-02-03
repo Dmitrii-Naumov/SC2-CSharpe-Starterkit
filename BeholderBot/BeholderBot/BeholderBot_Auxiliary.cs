@@ -11,15 +11,15 @@ using Unit = SC2_Connector.Unit;
 
 namespace BeholderBot
 {
-	public partial class Beholder : Bot
-	{
-		public void RefreshState()
-		{
-			RefreshHatcheries();
-		}
+    public partial class Beholder : Bot
+    {
+        public void RefreshState()
+        {
+            RefreshHatcheries();
+        }
 
-		#region Drones Management
-		public void DistributeWorkers()
+        #region Drones Management
+        public void DistributeWorkers()
         {
             //TODO priority saturation gas vs minerals
             //consider long distance mining
@@ -105,33 +105,40 @@ namespace BeholderBot
             return null;
         }
         #endregion
-        public bool Expand()
-        {
-            double mindistance = 99999999;
-            double minAlloweddistance = 10;
-            Vector3? expandPosition = null;
-            foreach (var location in CurrentMap.GetExpandLocations())
-            {
-                double distance = GetPathDistance(location, GetHatcheries()[0].Position);
-                bool alreadyHaveHatch = false;
-                foreach (var hatch in GetHatcheries())
-                {
-                    if (GetPathDistance(location, hatch.Position) < minAlloweddistance)
-                    {
-                        alreadyHaveHatch = true;
-                        break;
-                    }
-                }
 
-                if (distance < mindistance && !alreadyHaveHatch)
+
+        private List<KeyValuePair<double, Vector3>> SortedExpandLocations;
+
+        private List<KeyValuePair<double, Vector3>> GetSortedExpandLocationsForMe()
+        {
+            if (SortedExpandLocations == null)
+            {
+                SortedExpandLocations = new List<KeyValuePair<double, Vector3>>();
+                foreach (var location in MapHelper.GetExpandLocations())
                 {
-                    mindistance = distance;
-                    expandPosition = location;
+                    double distance = MapHelper.GetPathDistance(location.Position, 
+                        StartLocation + new Vector3(2, 2, 0));//need to offset start location since it is not pathable itself (we have a building there!)
+                    if(distance!=-1)
+                        SortedExpandLocations.Add(new KeyValuePair<double, Vector3>(distance, location.Position));
                 }
             }
+            SortedExpandLocations = SortedExpandLocations.OrderBy(_ => _.Key).ToList();
+            return SortedExpandLocations;
+        }
+
+        //private SortedList<float, Vector3> GetSortedExpandLocationsForEnemy()
+        //{
+        //}
+
+        public bool Expand()
+        {
+            int currentBases = Expands.Count();
+            Unit worker = GetAvailableWorker();
+            Vector3? expandPosition = GetSortedExpandLocationsForMe()[currentBases].Value;
+            
             if (expandPosition != null)
             {
-                if (Controller.Construct(GetAvailableWorker(), Units.HATCHERY, expandPosition)) ;
+                if (Controller.Construct(GetAvailableWorker(), Units.HATCHERY, expandPosition)) 
                 {
                     Logger.Info("Expanding");
                     return true;

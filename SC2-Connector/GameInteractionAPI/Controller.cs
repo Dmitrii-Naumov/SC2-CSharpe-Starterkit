@@ -19,17 +19,17 @@ namespace SC2_Connector
         private static readonly Random random = new Random();
         private const double FRAMES_PER_SECOND = 22.4;
 
-        internal static ResponseGameInfo gameInfo;
-        internal static ResponseData gameData;
-        internal static ResponseObservation obs;
+        internal static ResponseGameInfo GameInfo;
+        internal static ResponseData GameData;
+        internal static ResponseObservation Observation;
 
-        public static void OpenFrame()
+        internal static void OpenFrame()
         {
-            if (gameInfo == null || gameData == null || obs == null)
+            if (GameInfo == null || GameData == null || Observation == null)
             {
-                if (gameInfo == null)
+                if (GameInfo == null)
                     Logger.Info("GameInfo is null! The application will terminate.");
-                else if (gameData == null)
+                else if (GameData == null)
                     Logger.Info("GameData is null! The application will terminate.");
                 else
                     Logger.Info("ResponseObservation is null! The application will terminate.");
@@ -40,14 +40,14 @@ namespace SC2_Connector
             actions.Clear();
             PopulateUnits();
 
-            foreach (var chat in obs.Chat)
+            foreach (var chat in Observation.Chat)
                 ChatLog.Add(chat.Message);
 
-            Frame = obs.Observation.GameLoop;
-            CurrentSupply = obs.Observation.PlayerCommon.FoodUsed;
-            MaxSupply = obs.Observation.PlayerCommon.FoodCap;
-            Minerals = obs.Observation.PlayerCommon.Minerals;
-            Vespene = obs.Observation.PlayerCommon.Vespene;
+            Frame = Observation.Observation.GameLoop;
+            CurrentSupply = Observation.Observation.PlayerCommon.FoodUsed;
+            MaxSupply = Observation.Observation.PlayerCommon.FoodCap;
+            Minerals = Observation.Observation.PlayerCommon.Minerals;
+            Vespene = Observation.Observation.PlayerCommon.Vespene;
 
             //initialization
             if (Frame == 0)
@@ -57,12 +57,13 @@ namespace SC2_Connector
                 {
                     var rcPosition = resourceCenters[0].Position;
 
-                    foreach (var startLocation in gameInfo.StartRaw.StartLocations)
+                    foreach (var startLocation in GameInfo.StartRaw.StartLocations)
                     {
-                        var enemyLocation = new Vector3(startLocation.X, startLocation.Y, 0);
-                        var distance = Vector3.Distance(enemyLocation, rcPosition);
+                        var location = new Vector3(startLocation.X, startLocation.Y, 0);
+                        var distance = Vector3.Distance(location, rcPosition);
                         if (distance > 30)
-                            EnemyLocations.Add(enemyLocation);
+                            EnemyLocations.Add(location);
+                        else StartLocation = location;
                     }
                 }
             }
@@ -71,14 +72,19 @@ namespace SC2_Connector
                 Thread.Sleep(frameDelay);
         }
 
-        private static void PopulateUnits()
+		public static double Distance(Vector3 position, Unit unit)
+		{
+            return Math.Sqrt(Math.Pow(position.X- unit.Position.X,2)+Math.Pow(position.Y - unit.Position.Y, 2) );
+		}
+
+		private static void PopulateUnits()
         {
             ObservableUnits = new Dictionary<ulong, Unit>();
-            foreach (var unit in obs.Observation.RawData.Units)
-                ObservableUnits.Add(unit.Tag, new Unit(unit, Controller.gameData.Units[(int)unit.UnitType]));
+            foreach (var unit in Observation.Observation.RawData.Units)
+                ObservableUnits.Add(unit.Tag, new Unit(unit, Controller.GameData.Units[(int)unit.UnitType]));
         }
 
-        public static List<Action> CloseFrame()
+        internal static List<Action> CloseFrame()
         {
             return actions;
         }
@@ -94,10 +100,10 @@ namespace SC2_Connector
 
         private static int GetAbilityID(uint unit)
         {
-            return (int)Controller.gameData.Units[(int)unit].AbilityId;
+            return (int)Controller.GameData.Units[(int)unit].AbilityId;
         }
 
-        private static Point2D VectorToPoint(Vector3 vector)
+        internal static Point2D VectorToPoint(Vector3 vector)
         {
             var point= new Point2D();
             point.X = vector.X;
@@ -133,7 +139,7 @@ namespace SC2_Connector
                 case Units.HYDRALISK: return Abilities.LARVATRAIN_HYDRALISK;
                 case Units.CORRUPTOR: return Abilities.LARVATRAIN_ROACH;
                 case Units.INFESTOR: return Abilities.LARVATRAIN_MUTALISK;
-                case Units.SWARMHOSTMP: return Abilities.LARVATRAIN_SWARMHOST;
+                case Units.SWARMHOST: return Abilities.LARVATRAIN_SWARMHOST;
 
                 //T3
                 case Units.VIPER: return Abilities.LARVATRAIN_VIPER;
@@ -142,22 +148,25 @@ namespace SC2_Connector
             }
         }
         private static bool IsTechAvailable(uint unitType)
-        {
-            switch (unitType)
-            {
-                case Units.DRONE:
-                    return GetUnits(Units.LARVA, onlyCompleted: true).Count > 0;
-                case Units.OVERLORD:
-                    return GetUnits(Units.LARVA, onlyCompleted: true).Count > 0;
-                case Units.ZERGLING:
-                    return GetUnits(Units.SPAWNING_POOL, onlyCompleted: true).Count > 0;
-                case Units.QUEEN:
-                    return GetUnits(Units.SPAWNING_POOL, onlyCompleted: true).Count > 0;
-                default: throw new NotImplementedException();
-            }
-
+		{
+            return (IsNoTechRequired(unitType) || IsTechPresent(unitType)) && IsProducerPresent(unitType);
         }
-        private static List<Vector3> GetPointsInRadius(Vector3 value, int maxRadius)
+        private static bool IsProducerPresent(uint unitType)
+        {
+            return GetUnits(Units.ProducingStructure[unitType]).Count > 0;
+        }
+
+        private static bool IsTechPresent(uint unitType)
+		{
+			return GetUnits(Units.TechTree[unitType]).Count > 0;
+		}
+
+		private static bool IsNoTechRequired(uint unitType)
+		{
+			return !Units.TechTree.ContainsKey(unitType);
+		}
+
+		private static List<Vector3> GetPointsInRadius(Vector3 value, int maxRadius)
         {
             List<Vector3> result = new List<Vector3>();
             for (int i = 0; i < maxRadius; i++)
@@ -183,6 +192,7 @@ namespace SC2_Connector
         public static uint Vespene;
 
         public static readonly List<Vector3> EnemyLocations = new List<Vector3>();
+        public static Vector3 StartLocation;
         public static readonly List<string> ChatLog = new List<string>();
 
         public static Dictionary<ulong, Unit> ObservableUnits;
@@ -216,12 +226,7 @@ namespace SC2_Connector
 
         public static string GetUnitName(uint unitType)
         {
-            return gameData.Units[(int)unitType].Name;
-        }
-
-        public static string GetMapName()
-        {
-            return gameInfo.MapName;
+            return GameData.Units[(int)unitType].Name;
         }
 
         public static void FocusCamera(Vector3 Position)
@@ -314,9 +319,15 @@ namespace SC2_Connector
 
                 //trying to find a valid construction spot
                 var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
-
+                int retryCount = 100;
                 while (true)
                 {
+                    retryCount--;
+                    if (retryCount < 1)
+                    {
+                        Logger.Error("Unable to construct a {0} building here", GetUnitName(buildingToConstruct));
+                        return false;
+                    }
                     constructionSpot = new Vector3(startingSpot.X + random.Next(-radius, radius + 1), startingSpot.Y + random.Next(-radius, radius + 1), 0);
 
                     //avoid building in the mineral line
@@ -448,12 +459,12 @@ namespace SC2_Connector
 
         public static List<Unit> GetLarvae()
         {
-            return Controller.GetUnits(Units.LARVA);
+            return Controller.GetUnits(Units.LARVA, onlyCompleted: true);
         }
 
-        public static List<Unit> GetHatcheries()
+        public static List<Unit> GetHatcheries(bool onlyCompleted = false)
         {
-            return Controller.GetUnits(new HashSet<uint>() { Units.HATCHERY, Units.LAIR, Units.HIVE });
+            return Controller.GetUnits(Units.ZergResourceCenters, onlyCompleted: onlyCompleted);
         }
 
         public static Unit GetFirstInRange(Vector3 targetPosition, List<Unit> units, float maxDistance)
@@ -548,7 +559,7 @@ namespace SC2_Connector
 
         public static bool CanAfford(uint unitType)
         {
-            var unitData = gameData.Units[(int)unitType];
+            var unitData = GameData.Units[(int)unitType];
             return (Minerals >= unitData.MineralCost) && (Vespene >= unitData.VespeneCost);
         }
 
@@ -572,7 +583,7 @@ namespace SC2_Connector
             else
             {
                 //do we have enough supply?
-                var requiredSupply = Controller.gameData.Units[(int)unitType].FoodRequired;
+                var requiredSupply = Controller.GameData.Units[(int)unitType].FoodRequired;
                 if (requiredSupply > (MaxSupply - CurrentSupply))
                     return false;
 
@@ -612,23 +623,6 @@ namespace SC2_Connector
         public static bool IsInRange(Vector3 targetPosition, Unit unit, float maxDistance)
         {
             return (GetFirstInRange(targetPosition, unit, maxDistance) != null);
-        }
-
-        public static float GetPathDistance(Vector3 location, Vector3 position)
-        {
-            //Does not work for some reason
-            RequestQueryPathing queryPathing = new RequestQueryPathing();
-            queryPathing.StartPos = VectorToPoint(location);
-            queryPathing.EndPos = VectorToPoint(position);
-
-            Request requestQuery = new Request();
-            requestQuery.Query = new RequestQuery();
-            requestQuery.Query.Pathing.Add(queryPathing);
-
-            var result = Connection.SendQuery(requestQuery.Query);
-            if (result.Result.Pathing.Count > 0)
-                return result.Result.Pathing[0].Distance;
-            return float.PositiveInfinity;
         }
 
         #endregion

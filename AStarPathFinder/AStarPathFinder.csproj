@@ -4,15 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F5B20CD4-FD14-4095-935B-1698FEF217DD}</ProjectGuid>
+    <ProjectGuid>{BEF35C95-7164-4639-8B07-C2110B4044BC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SC2_Connector</RootNamespace>
-    <AssemblyName>SC2-Connector</AssemblyName>
+    <RootNamespace>AStarPathFinder</RootNamespace>
+    <AssemblyName>AStarPathFinder</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,12 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Google.Protobuf">
-      <HintPath>..\References\Google.Protobuf.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,40 +41,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Constants\Abilities.cs" />
-    <Compile Include="Constants\Buffs.cs" />
-    <Compile Include="Constants\ToHasSet.cs" />
-    <Compile Include="Constants\Units.cs" />
-    <Compile Include="MapAnalysis\BaseLocation.cs" />
-    <Compile Include="MapAnalysis\BoolGrid.cs" />
-    <Compile Include="GameInteractionAPI\Controller.cs" />
-    <Compile Include="MapAnalysis\Gas.cs" />
-    <Compile Include="MapAnalysis\ImageBoolGrid.cs" />
-    <Compile Include="MapAnalysis\MapHelper.cs" />
-    <Compile Include="MapAnalysis\MineralField.cs" />
-    <Compile Include="GameInteractionAPI\Unit.cs" />
-    <Compile Include="Logger.cs" />
+    <Compile Include="AStarPathFinder.cs" />
+    <Compile Include="IntPoint.cs" />
+    <Compile Include="Node.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Protocol\Common.cs" />
-    <Compile Include="Protocol\Data.cs" />
-    <Compile Include="Protocol\Debug.cs" />
-    <Compile Include="Protocol\Error.cs" />
-    <Compile Include="Protocol\Query.cs" />
-    <Compile Include="Protocol\Raw.cs" />
-    <Compile Include="Protocol\Sc2Api.cs" />
-    <Compile Include="Protocol\Score.cs" />
-    <Compile Include="Protocol\Spatial.cs" />
-    <Compile Include="Protocol\Ui.cs" />
-    <Compile Include="Wrapper\CommandLine.cs" />
-    <Compile Include="Wrapper\GameConnection.cs" />
-    <Compile Include="Wrapper\Interface.cs" />
-    <Compile Include="Wrapper\ProtobufProxy.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\AStarPathFinder\AStarPathFinder.csproj">
-      <Project>{bef35c95-7164-4639-8b07-c2110b4044bc}</Project>
-      <Name>AStarPathFinder</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

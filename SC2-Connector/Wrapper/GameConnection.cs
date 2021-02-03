@@ -201,8 +201,8 @@ namespace SC2_Connector
 
             var dataResponse = await proxy.SendRequest(dataReq);
 
-            Controller.gameInfo = gameInfoResponse.GameInfo;
-            Controller.gameData = dataResponse.Data;
+            Controller.GameInfo = gameInfoResponse.GameInfo;
+            Controller.GameData = dataResponse.Data;
 
             while (true) {
                 var observationRequest = new Request();
@@ -224,8 +224,11 @@ namespace SC2_Connector
                         break;
                     }
 
-                Controller.obs = observation;
-                var actions = bot.OnFrame();
+                Controller.Observation = observation;
+
+                Controller.OpenFrame();
+                bot.OnFrame();
+                var actions = Controller.CloseFrame();
 
                 var actionRequest = new Request();
                 actionRequest.Action = new RequestAction();

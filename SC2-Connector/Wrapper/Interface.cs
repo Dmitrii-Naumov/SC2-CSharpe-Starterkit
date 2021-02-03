@@ -5,7 +5,7 @@ namespace SC2_Connector
 {
     public interface Bot
     {
-        IEnumerable<Action> OnFrame();
+        void OnFrame();
         Race GetRace();
     }
 }

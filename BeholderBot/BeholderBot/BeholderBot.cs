@@ -16,11 +16,12 @@ namespace BeholderBot
 		}
 		#endregion
 		#region state
-		public MapInfo CurrentMap = new MapInfo();
 		public BuildOrder CurrentDebut = new Debut_17Hatch(); // new Debut_ProxyHatch();// new Debut_12Pool();
 															  //public Command CurrentPrimaryCommand =
 															  //public Command CurrentSecondaryCommand = 
 
+		public Vector3 StartLocation;
+		
 		List<GameplayTask> ActiveTasks;
 
 		//Main Base is base[0]
@@ -52,12 +53,16 @@ namespace BeholderBot
 		//Updates List of hatcheries
 		public void RefreshHatcheries()
 		{
+			Expands = new List<Unit>();
 			foreach (var hatch in Controller.GetHatcheries())
 			{
-				foreach (var expLocation in CurrentMap.GetExpandLocations())
-					if (Controller.IsInRange(expLocation, hatch, 2))
+				foreach (var expLocation in MapHelper.GetExpandLocations())
+				{
+					if (Controller.Distance(expLocation.Position, hatch) < 6)
 					{
+						Expands.Add(hatch);
 					}
+				}
 			}
 		}
 
@@ -66,16 +71,14 @@ namespace BeholderBot
 
 		//the following will be called every frame
 		//you can increase the amount of frames that get processed for each step at once in Wrapper/GameConnection.cs: stepSize  
-		public IEnumerable<Action> OnFrame()
+		public void OnFrame()
 		{
-			Controller.OpenFrame();
+			Initialization();
 
 			foreach (var task in ActiveTasks)
 			{
 				task.Execute();
 			}
-			LogInfo();
-			Talk();
 			IsItGG();
 
 			if (CurrentDebut.AbortConditionMet())
@@ -86,8 +89,17 @@ namespace BeholderBot
 			{
 				CurrentDebut.ExecuteBO(this);
 			}
+		}
 
-			return Controller.CloseFrame();
+		private void Initialization()
+		{
+			if (Controller.Frame == Controller.SecsToFrames(1))
+			{
+				SayGlHF();
+				LogInfo();
+				StartLocation = Controller.GetHatcheries().FirstOrDefault().Position;
+				RefreshState();
+			}
 		}
 
 		private void MidGameBehavior()
@@ -115,22 +127,17 @@ namespace BeholderBot
 				if (Controller.GetTotalCount(Units.SPAWNING_POOL) < 1)
 					Controller.Construct(GetAvailableWorker(), Units.SPAWNING_POOL);
 		}
-
-		private void Talk()
+		private void SayGlHF()
 		{
-			if (Controller.Frame == Controller.SecsToFrames(1))
-				Controller.Chat("good luck and have fun");
+			Controller.Chat("good luck and have fun");
 		}
 
 		private void LogInfo()
 		{
-			if (Controller.Frame == 0)
-			{
-				Logger.Info("BeholderBot");
-				Logger.Info("--------------------------------------");
-				Logger.Info("Map: {0}", Controller.GetMapName());
-				Logger.Info("--------------------------------------");
-			}
+			Logger.Info("BeholderBot");
+			Logger.Info("--------------------------------------");
+			Logger.Info("Map: {0}", MapHelper.GetMapName());
+			Logger.Info("--------------------------------------");
 		}
 
 		private void BuildArmy()
