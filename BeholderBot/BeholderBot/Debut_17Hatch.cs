@@ -25,7 +25,7 @@ namespace BeholderBot
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ExpandCommand()));
 
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructSingleCommand(Units.SPAWNING_POOL)));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructCommand(Units.SPAWNING_POOL)));
 
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.ZERGLING)));

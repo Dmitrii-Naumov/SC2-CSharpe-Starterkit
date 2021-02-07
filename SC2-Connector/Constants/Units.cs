@@ -999,5 +999,20 @@ namespace SC2_Connector
             { RAVEN , new HashSet<uint> { STARPORT } },
             { BATTLECRUISER , new HashSet<uint> { STARPORT } },
         };
+
+        public static readonly HashSet<uint> RequireCreep = new HashSet<uint>()
+        {
+             SPAWNING_POOL,
+             BANELING_NEST,
+             EVOLUTION_CHAMBER,
+             SPINE_CRAWLER,
+             SPORE_CRAWLER,
+             ROACH_WARREN,
+             HYDRALISK_DEN,
+             LURKER_DEN,
+             INFESTATION_PIT,
+             SPIRE,
+             ULTRALISK_CAVERN
+        };
     }
 }

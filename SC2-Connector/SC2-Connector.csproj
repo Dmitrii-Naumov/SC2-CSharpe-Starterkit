@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="Constants\Abilities.cs" />
     <Compile Include="Constants\Buffs.cs" />
+    <Compile Include="Constants\BuildingType.cs" />
     <Compile Include="Constants\ToHasSet.cs" />
     <Compile Include="Constants\Units.cs" />
     <Compile Include="MapAnalysis\BaseLocation.cs" />

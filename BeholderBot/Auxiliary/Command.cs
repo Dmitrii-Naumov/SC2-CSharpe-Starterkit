@@ -30,20 +30,7 @@ namespace BeholderBot
 			return false;
 		}
 	}
-	public class ConstructSingleCommand : ConstructCommand
-	{
-		public ConstructSingleCommand(uint buildingToConstruct) : base(buildingToConstruct)
-		{
-		}
-		public override bool Execute(Beholder bot)
-		{
-			if (Controller.GetTotalCount(BuildingToConstruct) < 1)
-			{
-				return base.Execute(bot);
-			}
-			return false;
-		}
-	}
+	
 	public class ConstructCommand : Command
 	{
 		protected uint BuildingToConstruct;

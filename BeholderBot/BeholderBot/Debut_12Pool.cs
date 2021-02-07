@@ -15,7 +15,7 @@ namespace BeholderBot
 
 			BO = new Queue<CommandWithCondition>(); 
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new TalkCommand("12 Pool debut")));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructSingleCommand(Units.SPAWNING_POOL)));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructCommand(Units.SPAWNING_POOL)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
 			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));

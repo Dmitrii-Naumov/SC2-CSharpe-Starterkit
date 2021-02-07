@@ -153,12 +153,12 @@ namespace SC2_Connector
         }
         private static bool IsProducerPresent(uint unitType)
         {
-            return GetUnits(Units.ProducingStructure[unitType]).Count > 0;
+            return GetUnits(Units.ProducingStructure[unitType], onlyCompleted: true).Count > 0;
         }
 
         private static bool IsTechPresent(uint unitType)
 		{
-			return GetUnits(Units.TechTree[unitType]).Count > 0;
+			return GetUnits(Units.TechTree[unitType], onlyCompleted: true).Count > 0;
 		}
 
 		private static bool IsNoTechRequired(uint unitType)
@@ -560,7 +560,7 @@ namespace SC2_Connector
         public static bool CanAfford(uint unitType)
         {
             var unitData = GameData.Units[(int)unitType];
-            return (Minerals >= unitData.MineralCost) && (Vespene >= unitData.VespeneCost);
+            return (Minerals >= (unitType == Units.ZERGLING ? 2 : 1) * unitData.MineralCost) && (Vespene >= unitData.VespeneCost);
         }
 
         public static bool CanConstruct(uint unitType)
@@ -596,9 +596,18 @@ namespace SC2_Connector
 
         public static bool CanPlace(uint unitType, Vector3 targetPos)
         {
+
+            var placement = MapHelper.GetPlacementGrid();
+            //Check for creep
+            if (Units.RequireCreep.Contains(unitType))
+            {
+                 placement = MapHelper.And(MapHelper.GetCreepGrid() , placement);
+            }
+            if (!CheckPoints(targetPos, BuildingType.GetBuildingSize(unitType), placement))
+                return false;
+
             //Note: this is a blocking call! Use it sparingly, or you will slow down your execution significantly!
             var abilityID = GetAbilityID(unitType);
-
             RequestQueryBuildingPlacement queryBuildingPlacement = new RequestQueryBuildingPlacement();
             queryBuildingPlacement.AbilityId = abilityID;
             queryBuildingPlacement.TargetPos = new Point2D();
@@ -613,6 +622,20 @@ namespace SC2_Connector
             if (result.Result.Placements.Count > 0)
                 return (result.Result.Placements[0].Result == ActionResult.Success);
             return false;
+        }
+
+		private static bool CheckPoints(Vector3 targetPos, Point2D point, bool[,] map)
+		{
+            for (int i = 0; i < point.X; i++)
+            {
+                for (int j = 0; j < point.Y; j++)
+                {
+                    if (!map[(int)(targetPos.X + i - (point.X / 2)), (int)(targetPos.Y + j - (point.Y / 2))])
+                        return false;
+                }
+            }
+            return true;
+
         }
 		#endregion
 

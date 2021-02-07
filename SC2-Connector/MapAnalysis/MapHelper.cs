@@ -24,8 +24,6 @@ namespace SC2_Connector
             if (ExpandLocations != null && ExpandLocations.Count != 0)
                 return ExpandLocations;
 
-            //   var geysers= GetUnits(Units.GasGeysers);
-            //    var mineralPatches = GetUnits(Units.MineralFields);
             var allResources = Controller.GetUnits(Units.ResourceField, alliance: Alliance.Neutral);
 
             List<List<Unit>> groups = new List<List<Unit>>();
@@ -93,14 +91,37 @@ namespace SC2_Connector
         public static bool[,] GetPathingGrid()
         {
             ImageBoolGrid pathingGrid = new ImageBoolGrid(Controller.GameInfo.StartRaw.PathingGrid);
-            bool[,] result = new bool[pathingGrid.Width(), pathingGrid.Height()];
-            for (int i = 0; i < pathingGrid.Width(); i++)
-                for (int j = 0; j < pathingGrid.Height(); j++)
-                {
-                    result[i, j] = pathingGrid[i, j];
-                }
+            return ConvertToBoolArray(pathingGrid);
+        }
+        public static bool[,] GetPlacementGrid()
+        {
+            ImageBoolGrid placementGrid = new ImageBoolGrid(Controller.GameInfo.StartRaw.PlacementGrid);
+            return ConvertToBoolArray(placementGrid);
+        }
+        public static bool[,] GetCreepGrid()
+		{
+			ImageBoolGrid creepGrid = new ImageBoolGrid(Controller.Observation.Observation.RawData.MapState.Creep);
+			return ConvertToBoolArray(creepGrid);
+		}
+
+		private static bool[,] ConvertToBoolArray(ImageBoolGrid imgeBoolGrid)
+		{
+			bool[,] result = new bool[imgeBoolGrid.Width(), imgeBoolGrid.Height()];
+			for (int i = 0; i < imgeBoolGrid.Width(); i++)
+				for (int j = 0; j < imgeBoolGrid.Height(); j++)
+				{
+					result[i, j] = imgeBoolGrid[i, j];
+				}
+
+			return result;
+		}
+        internal static bool[,] And(bool[,] a, bool[,] b)
+        {
+            bool[,] result = new bool[a.GetLength(0), b.GetLength(1)];
+            for (int i = 0; i < a.GetLength(0); i++)
+                for (int j = 0; j < a.GetLength(1); j++)
+                    result[i, j] = a[i, j] && b[i, j];
             return result;
         }
-
-    }
+	}
 }
