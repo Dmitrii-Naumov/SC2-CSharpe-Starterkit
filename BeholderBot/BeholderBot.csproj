@@ -57,6 +57,11 @@
     <Compile Include="BeholderBot\Debut_17Hatch.cs" />
     <Compile Include="BeholderBot\Debut_ProxyHatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tasks\CheckForGG.cs" />
+    <Compile Include="Tasks\DistributeOverlords.cs" />
+    <Compile Include="Tasks\DistributeWorkers.cs" />
+    <Compile Include="Tasks\Inject.cs" />
+    <Compile Include="Tasks\SpreadCreep.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SC2-Connector\SC2-Connector.csproj">

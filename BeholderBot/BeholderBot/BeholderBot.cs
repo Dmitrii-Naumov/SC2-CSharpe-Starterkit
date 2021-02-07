@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using SC2_Connector;
 using Unit = SC2_Connector.Unit;
+using BeholderBot.Tasks;
 
 namespace BeholderBot
 {
@@ -77,9 +78,9 @@ namespace BeholderBot
 
 			foreach (var task in ActiveTasks)
 			{
-				task.Execute();
+				if (Controller.Frame % task.ExcecutionFrequencyDivider == 0)
+					task.Execute();
 			}
-			IsItGG();
 
 			if (CurrentDebut.AbortConditionMet())
 			{
@@ -99,6 +100,11 @@ namespace BeholderBot
 				LogInfo();
 				StartLocation = Controller.GetHatcheries().FirstOrDefault().Position;
 				RefreshState();
+				
+				ActiveTasks.Add(new DistributeWorkers());
+				ActiveTasks.Add(new DistributeOverlords());
+				ActiveTasks.Add(new SpreadCreep());
+				ActiveTasks.Add(new CheckForGG() { ExcecutionFrequencyDivider = 25 });
 			}
 		}
 
@@ -153,8 +159,6 @@ namespace BeholderBot
 			if (!IsEnoughQueens())
 				Controller.BuildUnit(Units.QUEEN);
 
-			Inject();
-			SpreadCreep();
 			if (Controller.Frame % 11 == 0)
 			{
 				if (ShouldExpand() && Controller.CanAfford(Units.HATCHERY))
@@ -170,53 +174,11 @@ namespace BeholderBot
 				&& Controller.MaxSupply - Controller.CurrentSupply <= 5
 				&& Controller.GetPendingCount(Units.OVERLORD) < 1)
 				Controller.BuildUnit(Units.OVERLORD);
-
-
-			//distribute workers optimally every 10 frames
-			if (Controller.Frame % 10 == 0)
-				DistributeWorkers();
-
-			if (Controller.Frame % 10 == 0)
-				DistributeOverlords();
 		}
 
 		private bool ShouldExpand()
 		{
 			return Controller.GetUnits(Units.DRONE).Count > 16;
-		}
-
-		private void SpreadCreep()
-		{
-			//foreach (var queen in Controller.GetUnits(Units.QUEEN))
-			//{
-			//	if (queen.Energy >= 25 && queen.Orders.Count == 0)
-			//	{
-			//		queen
-			//	}
-			//}
-		}
-
-		private void DistributeOverlords()
-		{
-			//send scouting unless it is dangerous. If it is dangerous, keep near spores
-		}
-
-		private void Inject()
-		{
-			foreach (var rc in Controller.GetHatcheries().Where(_ => !_.IsInjected))
-			{
-				foreach (var queen in Controller.GetUnits(Units.QUEEN))
-				{
-					if (queen.Energy >= 25 && queen.Orders.Count == 0)
-					{
-						if (Controller.IsInRange(queen.Position, new List<Unit>() { rc }, 5))
-						{
-							Controller.Inject(new List<Unit>() { queen }, rc);
-							break;
-						}
-					}
-				}
-			}
 		}
 
 		private bool IsEnoughQueens()
@@ -247,19 +209,6 @@ namespace BeholderBot
 		private bool IsEnoughDrones()
 		{
 			return Controller.GetUnits(Units.DRONE).Count > 21;
-
-		}
-
-		private void IsItGG()
-		{
-			var structures = Controller.GetUnits(Units.Structures);
-			if (structures.Count == 1)
-			{
-				//last building                
-				if (structures[0].Integrity < 0.4) //being attacked or burning down                 
-					if (!Controller.ChatLog.Contains("gg"))
-						Controller.Chat("gg");
-			}
 		}
 	}
 }
