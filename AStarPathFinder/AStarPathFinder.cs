@@ -11,6 +11,11 @@ namespace AStarPathFinder
     {
         public static double GetBestPathLength(IntPoint2D from, IntPoint2D to, bool[,] pathingGrid)
         {
+            return GetBestPathLength(from, to, pathingGrid, out _);
+        }
+
+        public static double GetBestPathLength(IntPoint2D from, IntPoint2D to, bool[,] pathingGrid, out int visitedNodesCount)
+        {
             var visitedNodes = new HashSet<Node>();
             var unvisitedNodes = new HashSet<Node>();
             unvisitedNodes.Add(new Node() { Point = from, PathLength = 0 });
@@ -20,6 +25,7 @@ namespace AStarPathFinder
                 visitedNodes.Add(bestNode);
                 if (bestNode.Point.Equals(to))
                 {
+                    visitedNodesCount = visitedNodes.Count;
                     return bestNode.PathLength;
                 }
                 unvisitedNodes.Remove(bestNode);
@@ -27,8 +33,9 @@ namespace AStarPathFinder
             }
             //for debugging
             var result = VisualizeNodes(visitedNodes, pathingGrid.GetLength(0), pathingGrid.GetLength(1));
-          
+
             //no path found
+            visitedNodesCount = visitedNodes.Count;
             return -1;
         }
 
@@ -52,14 +59,14 @@ namespace AStarPathFinder
         private static Node GetBestNode(HashSet<Node> unvisitedNodes, IntPoint2D to)
         {
             Node bestNode = null;
-            double bestSquaredDistance = 0;
+            double bestDistance = 0;
             foreach (var node in unvisitedNodes)
             {
-                double newSquaredDistance = SquaredDistance(to, node);
-                if (bestNode == null || Math.Pow(node.PathLength, 2) + newSquaredDistance < Math.Pow(bestNode.PathLength, 2) + bestSquaredDistance)
+                double newDistance = Math.Sqrt( SquaredDistance(to, node));
+                if (bestNode == null ||node.PathLength  + newDistance < bestNode.PathLength + bestDistance)
                 {
                     bestNode = node;
-                    bestSquaredDistance = SquaredDistance(to, bestNode);
+                    bestDistance = newDistance;
                 }
             }
             return bestNode;

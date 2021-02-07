@@ -56,8 +56,25 @@ namespace AStarTests
 			map[3, 3] = true;
 			IntPoint2D from = new IntPoint2D() { X = 0, Y = 0 };
 			IntPoint2D to = new IntPoint2D() { X = 3, Y = 0 };
-			//4 because we can move diagonally
-			Assert.AreEqual(4, AStarPathFinder.AStarPathFinder.GetBestPathLength(from, to, map));
+
+			var pathLength = AStarPathFinder.AStarPathFinder.GetBestPathLength(from, to, map);
+			Assert.IsTrue(pathLength>5 && pathLength<6);
+		}
+		[TestMethod]
+		public void CalculatesPathEfficiently()
+		{
+			bool[,] map = new bool[5, 5];
+			for (int i = 0; i < 5; i++)
+				for (int j = 0; j < 5; j++)
+					map[i, j] = true;
+
+			IntPoint2D from = new IntPoint2D() { X = 0, Y = 0 };
+			IntPoint2D to = new IntPoint2D() { X = 4, Y = 4 };
+
+			int visitedNodesCount;
+			var pathLength = AStarPathFinder.AStarPathFinder.GetBestPathLength(from, to, map, out visitedNodesCount);
+			Assert.IsTrue(pathLength > 5 && pathLength < 6, "Wrong Path Calculated");
+			Assert.IsTrue(visitedNodesCount >= 4 && visitedNodesCount <= 8, "Path Calculated Inefficiently");
 		}
 	}
 }
