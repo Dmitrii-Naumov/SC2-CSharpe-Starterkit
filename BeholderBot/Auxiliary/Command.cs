@@ -1,4 +1,5 @@
 ﻿using SC2_Connector;
+using System;
 
 namespace BeholderBot
 {
@@ -19,6 +20,16 @@ namespace BeholderBot
 			return Controller.BuildUnit(UnitToBuild);
 		}
 	}
+	public class ExtraDroneCommand : Command
+	{
+		private uint UnitToBuild;
+
+		public override bool Execute(Beholder bot)
+		{
+			throw new NotImplementedException();
+			return Controller.BuildUnit(Units.DRONE);
+		}
+	}
 	public class ExpandCommand : Command
 	{
 		public override bool Execute(Beholder bot)
@@ -30,7 +41,18 @@ namespace BeholderBot
 			return false;
 		}
 	}
-	
+	public class ProxyHatchCommand : Command
+	{
+		public override bool Execute(Beholder bot)
+		{
+			if (Controller.CanConstruct(Units.HATCHERY))
+			{
+				return bot.Proxy();
+			}
+			return false;
+		}
+	}
+
 	public class ConstructCommand : Command
 	{
 		protected uint BuildingToConstruct;

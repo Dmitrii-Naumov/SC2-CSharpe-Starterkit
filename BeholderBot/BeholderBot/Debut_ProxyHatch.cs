@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SC2_Connector;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,28 +7,21 @@ using System.Threading.Tasks;
 
 namespace BeholderBot
 {
-	//public class Debut_ProxyHatch : BuildOrder
-	//{
-	//	public override bool AbortConditionMet()
-	//	{
-	//		return Controller.currentSupply > 18;
-	//	}
+	public class Debut_ProxyHatch : BuildOrder
+	{
+		public Debut_ProxyHatch()
+		{
+			AbortCondition = new MinSupplyCondition(25);
 
-	//	public override void ExecuteBO()
-	//	{
-	//		if (Controller.GetTotalCount(Units.DRONE) == 13 && Controller.GetPendingCount(Units.OVERLORD) < 1)
-	//		{
-	//			Controller.BuildUnit(Units.OVERLORD);
-	//		}
-	//		Controller.BuildUnit(Units.DRONE);
-	//		if (Controller.currentSupply==14 && Controller.GetPendingCount(Units.DRONE)==0)
-	//		{
-	//			Unit proxyDrone = Controller.GetAvailableWorker(new System.Numerics.Vector3());
-	//			if (proxyDrone.unitType == Units.DRONE)
-	//			{
-	//				proxyDrone.Move(Controller.enemyLocations.FirstOrDefault());
-	//			}
-	//		}
-	//	}
-	//}
+			BO = new Queue<CommandWithCondition>();
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new TalkCommand("Proxy Hatch debut")));
+
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ExtraDroneCommand()));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.OVERLORD)));
+			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+
+		}
+	}
 }
