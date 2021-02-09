@@ -14,8 +14,8 @@ namespace SC2_Connector
 		//editable
 		private static readonly int frameDelay = 0; //too fast? increase this to e.g. 20
 
-        //don't edit
-        private static readonly List<Action> actions = new List<Action>();
+		//don't edit
+		private static readonly List<Action> actions = new List<Action>();
         private static readonly Random random = new Random();
         private const double FRAMES_PER_SECOND = 22.4;
 
@@ -622,33 +622,52 @@ namespace SC2_Connector
 
         public static bool CanPlace(uint unitType, Vector3 targetPos)
         {
-
-            var placement = MapHelper.GetPlacementGrid();
-            //Check for creep
-            if (Units.RequireCreep.Contains(unitType))
+            // QueryBuildingPlacement(unitType, targetPos); Verification on our side is sufficient
+            if (Units.GasBuildings.Contains(unitType))
             {
-                 placement = MapHelper.And(MapHelper.GetCreepGrid() , placement);
-            }
-            if (!CheckPoints(targetPos, BuildingType.GetBuildingSize(unitType), placement))
+                foreach (var geyser in GetGeysers())
+                {
+                    if (targetPos.X == geyser.Position.X && targetPos.Y == geyser.Position.Y)
+                        return true;
+                }
                 return false;
-
-            //Note: this is a blocking call! Use it sparingly, or you will slow down your execution significantly!
-            var abilityID = GetAbilityID(unitType);
-            RequestQueryBuildingPlacement queryBuildingPlacement = new RequestQueryBuildingPlacement();
-            queryBuildingPlacement.AbilityId = abilityID;
-            queryBuildingPlacement.TargetPos = new Point2D();
-            queryBuildingPlacement.TargetPos.X = targetPos.X;
-            queryBuildingPlacement.TargetPos.Y = targetPos.Y;
-
-            Request requestQuery = new Request();
-            requestQuery.Query = new RequestQuery();
-            requestQuery.Query.Placements.Add(queryBuildingPlacement);
-
-            var result = Connection.SendQuery(requestQuery.Query);
-            if (result.Result.Placements.Count > 0)
-                return (result.Result.Placements[0].Result == ActionResult.Success);
-            return false;
+            }
+            else
+            {
+                bool[,] placement;
+                placement = MapHelper.GetPlacementGrid();
+                //Check for creep
+                if (Units.RequireCreep.Contains(unitType))
+                {
+                    placement = MapHelper.And(MapHelper.GetCreepGrid(), placement);
+                }
+                if (!CheckPoints(targetPos, BuildingType.GetBuildingSize(unitType), placement))
+                    return false;
+            }
+            return true;
         }
+
+		private static bool QueryBuildingPlacement(uint unitType, Vector3 targetPos)
+		{
+
+			//Note: this is a blocking call! Use it sparingly, or you will slow down your execution significantly!
+			bool canPlace = false;
+			var abilityID = GetAbilityID(unitType);
+			RequestQueryBuildingPlacement queryBuildingPlacement = new RequestQueryBuildingPlacement();
+			queryBuildingPlacement.AbilityId = abilityID;
+			queryBuildingPlacement.TargetPos = new Point2D();
+			queryBuildingPlacement.TargetPos.X = targetPos.X;
+			queryBuildingPlacement.TargetPos.Y = targetPos.Y;
+
+			Request requestQuery = new Request();
+			requestQuery.Query = new RequestQuery();
+			requestQuery.Query.Placements.Add(queryBuildingPlacement);
+
+			var result = Connection.SendQuery(requestQuery.Query);
+			if (result.Result.Placements.Count > 0)
+				canPlace = (result.Result.Placements[0].Result == ActionResult.Success);
+			return canPlace;
+		}
 
 		private static bool CheckPoints(Vector3 targetPos, Point2D point, bool[,] map)
 		{

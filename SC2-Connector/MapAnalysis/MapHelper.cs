@@ -104,7 +104,12 @@ namespace SC2_Connector
 			return ConvertToBoolArray(creepGrid);
 		}
 
-		private static bool[,] ConvertToBoolArray(ImageBoolGrid imgeBoolGrid)
+        public static bool[,] GetPowerFieldGrid()
+        {
+            throw new NotImplementedException();
+        }
+
+        private static bool[,] ConvertToBoolArray(ImageBoolGrid imgeBoolGrid)
 		{
 			bool[,] result = new bool[imgeBoolGrid.Width(), imgeBoolGrid.Height()];
 			for (int i = 0; i < imgeBoolGrid.Width(); i++)
@@ -123,5 +128,6 @@ namespace SC2_Connector
                     result[i, j] = a[i, j] && b[i, j];
             return result;
         }
+
 	}
 }
