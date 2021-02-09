@@ -14,12 +14,15 @@ namespace BeholderBot
 		}
 		public void ExecuteBO(Beholder bot)
 		{
-			if (BO.Peek().TryExecute(bot))
+			var command = BO.Peek();
+			switch (command.Behavior)
 			{
-				BO.Dequeue();
+				case CommandBehavior.Blocking: if (command.TryExecute(bot)) { BO.Dequeue(); } break;
+				case CommandBehavior.NonBlocking: bot.ASyncCommands.Add(command); BO.Dequeue(); break;
+				case CommandBehavior.Repetative: bot.RepetativeCommands.Add(command); BO.Dequeue(); break;
 			}
 		}
 		protected Condition AbortCondition;
-		protected Queue<CommandWithCondition> BO;
+		protected Queue<Command> BO;
 	}
 }

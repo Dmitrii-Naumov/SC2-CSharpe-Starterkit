@@ -46,9 +46,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Auxiliary\BuildOrder.cs" />
-    <Compile Include="Auxiliary\Command.cs" />
-    <Compile Include="Auxiliary\CommandWithCondition.cs" />
-    <Compile Include="Auxiliary\Condition.cs" />
+    <Compile Include="Commands\AttackCommand.cs" />
+    <Compile Include="Commands\BuildUnitCommand.cs" />
+    <Compile Include="Commands\CancelBuildingCommand.cs" />
+    <Compile Include="Commands\GetUnitCommand.cs" />
+    <Compile Include="Commands\Command.cs" />
+    <Compile Include="Condition\AndCondition.cs" />
+    <Compile Include="Condition\Condition.cs" />
     <Compile Include="Auxiliary\Enums.cs" />
     <Compile Include="Auxiliary\GameplayTask.cs" />
     <Compile Include="BeholderBot\BeholderBot.cs" />
@@ -56,6 +60,16 @@
     <Compile Include="BeholderBot\Debut_12Pool.cs" />
     <Compile Include="BeholderBot\Debut_17Hatch.cs" />
     <Compile Include="BeholderBot\Debut_ProxyHatch.cs" />
+    <Compile Include="Commands\ConstructCommand.cs" />
+    <Compile Include="Commands\ExpandCommand.cs" />
+    <Compile Include="Commands\MoveUnitCommand.cs" />
+    <Compile Include="Commands\ProxyHatchCommand.cs" />
+    <Compile Include="Commands\TalkCommand.cs" />
+    <Compile Include="Condition\EmptyCondition.cs" />
+    <Compile Include="Condition\MineralCondition.cs" />
+    <Compile Include="Condition\MinSupplyCondition.cs" />
+    <Compile Include="Condition\OrCondition.cs" />
+    <Compile Include="Condition\UnitsCondition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Tasks\CheckForGG.cs" />
     <Compile Include="Tasks\DistributeOverlords.cs" />

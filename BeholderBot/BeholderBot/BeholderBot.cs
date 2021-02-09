@@ -14,16 +14,20 @@ namespace BeholderBot
 		public Beholder()
 		{
 			ActiveTasks = new List<GameplayTask>();
+			ASyncCommands = new List<Command>();
+			RepetativeCommands = new List<Command>();
 		}
 		#endregion
 		#region state
-		public BuildOrder CurrentDebut = new Debut_17Hatch(); // new Debut_ProxyHatch();// new Debut_12Pool();
-															  //public Command CurrentPrimaryCommand =
-															  //public Command CurrentSecondaryCommand = 
+		public BuildOrder CurrentDebut = new Debut_ProxyHatch(); //new Debut_17Hatch(); // // new Debut_12Pool();
+																//public Command CurrentPrimaryCommand =
+																//public Command CurrentSecondaryCommand = 
 
 		public Vector3 StartLocation;
 		
 		List<GameplayTask> ActiveTasks;
+		public List<Command> ASyncCommands;
+		public List<Command> RepetativeCommands;
 
 		//Main Base is base[0]
 		//List of bases
@@ -81,6 +85,16 @@ namespace BeholderBot
 				if (Controller.Frame % task.ExcecutionFrequencyDivider == 0)
 					task.Execute();
 			}
+			foreach (var task in RepetativeCommands)
+			{
+				task.TryExecute(this);
+			}
+
+			foreach (var task in ASyncCommands)
+			{
+				if (task.TryExecute(this))
+					ASyncCommands.Remove(task);
+			}
 
 			if (CurrentDebut.AbortConditionMet())
 			{
@@ -90,6 +104,7 @@ namespace BeholderBot
 			{
 				CurrentDebut.ExecuteBO(this);
 			}
+
 		}
 
 		private void Initialization()

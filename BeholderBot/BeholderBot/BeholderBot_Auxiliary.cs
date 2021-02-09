@@ -29,7 +29,6 @@ namespace BeholderBot
                 // TODO: select worker who is not currently gathering/carrying mineral/scouting
 
                 //  if (worker.order.AbilityId != Abilities.GATHER_MINERALS) continue;
-
                 return worker;
             }
 

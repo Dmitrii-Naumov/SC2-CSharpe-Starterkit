@@ -245,6 +245,14 @@ namespace SC2_Connector
 
         #region Gameplay Actions
         #region Unit Commands
+        public static bool Cancel(Unit unitToCancel)
+        {
+            var action = Controller.CreateRawUnitCommand(Abilities.CANCEL);
+            action.ActionRaw.UnitCommand.UnitTags.Add(unitToCancel.Tag);
+            Controller.AddAction(action);
+            return true;
+        }
+
         public static void Move(List<Unit> units, Vector3 target)
         {
             var action = Controller.CreateRawUnitCommand(Abilities.MOVE);
@@ -430,11 +438,11 @@ namespace SC2_Connector
             return null;
         }
 
-        public static List<Unit> GetUnits(HashSet<uint> hashset, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false)
+        public static List<Unit> GetUnits(HashSet<uint> unitTypes, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false)
         {
             var units = new List<Unit>();
             foreach (var unit in ObservableUnits.Values)
-                if (hashset.Contains(unit.UnitType) && unit.Alliance == alliance)
+                if (unitTypes.Contains(unit.UnitType) && unit.Alliance == alliance)
                 {
                     if (onlyCompleted && unit.BuildProgress < 1)
                         continue;
@@ -445,6 +453,20 @@ namespace SC2_Connector
                     units.Add(unit);
                 }
             return units;
+        }
+        public static Unit GetUnit(uint unitType, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false)
+        {
+            foreach (var unit in ObservableUnits.Values)
+                if (unitType == unit.UnitType && unit.Alliance == alliance)
+                {
+                    if (onlyCompleted && unit.BuildProgress < 1)
+                        continue;
+
+                    if (onlyVisible && (!unit.IsVisible))
+                        continue;
+                    return unit;
+                }
+            return null;
         }
 
         public static List<Unit> GetUnits(uint unitType, Alliance alliance = Alliance.Self, bool onlyCompleted = false, bool onlyVisible = false)
@@ -465,6 +487,10 @@ namespace SC2_Connector
         public static List<Unit> GetHatcheries(bool onlyCompleted = false)
         {
             return Controller.GetUnits(Units.ZergResourceCenters, onlyCompleted: onlyCompleted);
+        }
+        public static List<Unit> GetGeysers()
+        {
+            return Controller.GetUnits(Units.GasGeysers, Alliance.Neutral);
         }
 
         public static Unit GetFirstInRange(Vector3 targetPosition, List<Unit> units, float maxDistance)

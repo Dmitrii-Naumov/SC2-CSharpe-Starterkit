@@ -13,34 +13,34 @@ namespace BeholderBot
 		{
 			AbortCondition = new MinSupplyCondition(25);
 
-			BO = new Queue<CommandWithCondition>();
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new TalkCommand("17 Hatch debut")));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.OVERLORD)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+			BO = new Queue<Command>();
+			BO.Enqueue(new TalkCommand("17 Hatch debut"));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue(new BuildUnitCommand(Units.OVERLORD));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
 
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
 
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ExpandCommand()));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue(new ExpandCommand());
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
 
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructCommand(Units.EXTRACTOR)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ConstructCommand(Units.SPAWNING_POOL)));
+			BO.Enqueue(new ConstructCommand(Units.EXTRACTOR));
+			BO.Enqueue(new ConstructCommand(Units.SPAWNING_POOL));
 
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.OVERLORD)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.ZERGLING)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.ZERGLING)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.ZERGLING)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.ZERGLING)));
-			BO.Enqueue(new CommandWithCondition(new UnitsCondition(Units.ZERGLING, 6), new AttackCommand()));
-			BO.Enqueue(new CommandWithCondition(new UnitsCondition(Units.ZERGLING, 8), new AttackCommand()));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new TalkCommand("BO Completed")));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue(new BuildUnitCommand(Units.OVERLORD));
+			BO.Enqueue(new BuildUnitCommand(Units.ZERGLING));
+			BO.Enqueue(new BuildUnitCommand(Units.ZERGLING));
+			BO.Enqueue(new BuildUnitCommand(Units.ZERGLING));
+			BO.Enqueue(new BuildUnitCommand(Units.ZERGLING));
+			BO.Enqueue(new AttackCommand().WithCondition(new UnitsCondition(Units.ZERGLING, 6)));
+			BO.Enqueue(new AttackCommand().WithCondition(new UnitsCondition(Units.ZERGLING, 8)));
+			BO.Enqueue(new TalkCommand("BO Completed"));
 		}
 	}
 }

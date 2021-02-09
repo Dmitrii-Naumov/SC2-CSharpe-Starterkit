@@ -9,18 +9,26 @@ namespace BeholderBot
 {
 	public class Debut_ProxyHatch : BuildOrder
 	{
+		Unit ExtraExtractor;
+		Unit Drone;
 		public Debut_ProxyHatch()
 		{
 			AbortCondition = new MinSupplyCondition(25);
 
-			BO = new Queue<CommandWithCondition>();
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new TalkCommand("Proxy Hatch debut")));
+			BO = new Queue<Command>();
+			BO.Enqueue(new TalkCommand("Proxy Hatch debut"));
 
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new ExtraDroneCommand()));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.OVERLORD)));
-			BO.Enqueue(new CommandWithCondition(new EmptyCondition(), new BuildUnitCommand(Units.DRONE)));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue( new BuildUnitCommand(Units.DRONE));
+
+			BO.Enqueue( new MoveUnitCommand(Drone, new System.Numerics.Vector3(50,50,0)));
+			BO.Enqueue(new ConstructCommand(Units.EXTRACTOR));
+			BO.Enqueue( new GetUnitCommand(Units.EXTRACTOR, ExtraExtractor));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+
+			BO.Enqueue( new CancelBuildingCommand(ExtraExtractor));
+			BO.Enqueue(new BuildUnitCommand(Units.OVERLORD));
+			BO.Enqueue( new BuildUnitCommand(Units.DRONE));
 
 		}
 	}

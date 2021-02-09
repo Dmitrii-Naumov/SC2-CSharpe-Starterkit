@@ -12,4 +12,10 @@ namespace BeholderBot
 		Normal = 0,
 		High = 1
 	};
+	public enum CommandBehavior
+	{
+		Blocking, 
+		NonBlocking, 
+		Repetative
+	};
 }
