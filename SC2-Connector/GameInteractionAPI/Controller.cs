@@ -308,74 +308,112 @@ namespace SC2_Connector
             AddAction(action);
         }
 
-        public static bool Construct(Unit worker, uint buildingToConstruct, Vector3? constructionSpot = null)
+        private static Vector3? FindAvailableConstructionSpot(uint buildingToConstruct)
         {
-            if (constructionSpot == null)
-            {
-                Vector3 startingSpot;
-                var resourceCenters = GetUnits(Units.ResourceCenters);
-                if (resourceCenters.Count > 0)
-                    startingSpot = resourceCenters[0].Position;
-                else
-                {
-                    Logger.Error("Unable to construct: {0}. No resource center was found.", GetUnitName(buildingToConstruct));
-                    return false;
-                }
-
-
-                const int radius = 12;
-
-                //trying to find a valid construction spot
-                var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
-                int retryCount = 100;
-                while (true)
-                {
-                    retryCount--;
-                    if (retryCount < 1)
-                    {
-                        Logger.Error("Unable to construct a {0} building here", GetUnitName(buildingToConstruct));
-                        return false;
-                    }
-                    constructionSpot = new Vector3(startingSpot.X + random.Next(-radius, radius + 1), startingSpot.Y + random.Next(-radius, radius + 1), 0);
-
-                    //avoid building in the mineral line
-                    if (IsInRange(constructionSpot.Value, mineralFields, 5)) continue;
-
-                    //check if the building fits
-                    if (!CanPlace(buildingToConstruct, constructionSpot.Value)) continue;
-
-                    //ok, we found a spot
-                    break;
-                }
-            }
+            Vector3 constructionSpot;
+            Vector3 startingSpot;
+            var resourceCenters = GetUnits(Units.ResourceCenters);
+            if (resourceCenters.Count > 0)
+                startingSpot = resourceCenters[0].Position;
             else
             {
-                if (!CanPlace(buildingToConstruct, constructionSpot.Value))
-                {
-                    int maxRadius = 11;
-
-                    List<Vector3> points = GetPointsInRadius(constructionSpot.Value, maxRadius);
-                    bool foundSpot = false;
-                    foreach (var point in points)
-                    {
-                        if (CanPlace(buildingToConstruct, point))
-                        {
-                            constructionSpot = point;
-                            foundSpot = true;
-                            break;
-                        }
-                    }
-                    if (!foundSpot)
-                    {
-                        Logger.Error("Unable to construct a {0} building here", GetUnitName(buildingToConstruct));
-                        return false;
-                    }
-                }
+                Logger.Error("Unable to construct: {0}. No resource center was found.", GetUnitName(buildingToConstruct));
+                return null;
             }
 
+
+            const int radius = 12;
+
+            //trying to find a valid construction spot
+            var mineralFields = GetUnits(Units.MineralFields, onlyVisible: true, alliance: Alliance.Neutral);
+            int retryCount = 100;
+            while (true)
+            {
+                retryCount--;
+                if (retryCount < 1)
+                {
+                    Logger.Error("Unable to find a place for {0} building here", GetUnitName(buildingToConstruct));
+                    return null;
+                }
+                constructionSpot = new Vector3(startingSpot.X + random.Next(-radius, radius + 1), startingSpot.Y + random.Next(-radius, radius + 1), 0);
+
+                //avoid building in the mineral line
+                if (IsInRange(constructionSpot, mineralFields, 5)) continue;
+
+                //check if the building fits
+                if (!CanPlace(buildingToConstruct, constructionSpot)) continue;
+
+                //ok, we found a spot
+                break;
+            }
+            return constructionSpot;
+        }
+
+        private static Vector3? AdjustConstructionSpot(Vector3 constructionSpot, uint buildingToConstruct)
+        {
+            if (!CanPlace(buildingToConstruct, constructionSpot))
+            {
+                int maxRadius = 11;
+
+                List<Vector3> points = GetPointsInRadius(constructionSpot, maxRadius);
+                bool foundSpot = false;
+                foreach (var point in points)
+                {
+                    if (CanPlace(buildingToConstruct, point))
+                    {
+                        constructionSpot = point;
+                        foundSpot = true;
+                        break;
+                    }
+                }
+                if (!foundSpot)
+                {
+                    Logger.Error("Unable to construct a {0} building here", GetUnitName(buildingToConstruct));
+                    return null;
+                }
+            }
+            return constructionSpot;
+        }
+        public static bool ConstructGas(Unit worker, uint buildingToConstruct, Unit geyser = null)
+        {
             if (worker == null)
             {
                 Logger.Error("Unable to find worker to construct: {0}", GetUnitName(buildingToConstruct));
+                return false;
+            }
+
+            if (geyser == null)
+            {
+                geyser = GetGeysers().FirstOrDefault();
+            }
+
+            var abilityID = GetAbilityID(buildingToConstruct);
+            var constructAction = CreateRawUnitCommand(abilityID);
+            constructAction.ActionRaw.UnitCommand.UnitTags.Add(worker.Tag);
+            constructAction.ActionRaw.UnitCommand.TargetUnitTag = geyser.Tag;
+            AddAction(constructAction);
+
+            Logger.Info("Constructing: {0} @ {1} / {2}", GetUnitName(buildingToConstruct), geyser.Position.X, geyser.Position.Y);
+            return true;
+        }
+        public static bool Construct(Unit worker, uint buildingToConstruct, Vector3? constructionSpot = null, bool adjustConstructionSpot = false)
+        {
+            if (worker == null)
+            {
+                Logger.Error("Unable to find worker to construct: {0}", GetUnitName(buildingToConstruct));
+                return false;
+            }
+
+            if (constructionSpot == null)
+            {
+                constructionSpot = FindAvailableConstructionSpot(buildingToConstruct);
+            }
+            else if (adjustConstructionSpot)
+            {
+                constructionSpot = AdjustConstructionSpot(constructionSpot.Value, buildingToConstruct);
+            }
+            if (constructionSpot == null)
+            {
                 return false;
             }
 
@@ -621,29 +659,18 @@ namespace SC2_Connector
         }
 
         public static bool CanPlace(uint unitType, Vector3 targetPos)
-        {
             // QueryBuildingPlacement(unitType, targetPos); Verification on our side is sufficient
-            if (Units.GasBuildings.Contains(unitType))
+        {
+            bool[,] placement;
+            placement = MapHelper.GetPlacementGrid();
+            //Check for creep
+            if (Units.RequireCreep.Contains(unitType))
             {
-                foreach (var geyser in GetGeysers())
-                {
-                    if (targetPos.X == geyser.Position.X && targetPos.Y == geyser.Position.Y)
-                        return true;
-                }
+                placement = MapHelper.And(MapHelper.GetCreepGrid(), placement);
+            }
+            if (!CheckPoints(targetPos, BuildingType.GetBuildingSize(unitType), placement))
                 return false;
-            }
-            else
-            {
-                bool[,] placement;
-                placement = MapHelper.GetPlacementGrid();
-                //Check for creep
-                if (Units.RequireCreep.Contains(unitType))
-                {
-                    placement = MapHelper.And(MapHelper.GetCreepGrid(), placement);
-                }
-                if (!CheckPoints(targetPos, BuildingType.GetBuildingSize(unitType), placement))
-                    return false;
-            }
+
             return true;
         }
 

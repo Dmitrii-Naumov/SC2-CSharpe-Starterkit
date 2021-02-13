@@ -19,16 +19,16 @@ namespace BeholderBot
 			BO.Enqueue(new TalkCommand("Proxy Hatch debut"));
 
 			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
-			BO.Enqueue( new BuildUnitCommand(Units.DRONE));
-
-			BO.Enqueue( new MoveUnitCommand(Drone, new System.Numerics.Vector3(50,50,0)));
-			BO.Enqueue(new ConstructCommand(Units.EXTRACTOR));
-			BO.Enqueue( new GetUnitCommand(Units.EXTRACTOR, ExtraExtractor));
 			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
 
-			BO.Enqueue( new CancelBuildingCommand(ExtraExtractor));
+			BO.Enqueue(new MoveUnitCommand(Drone, new System.Numerics.Vector3(50, 50, 0)));
+			BO.Enqueue(new ConstructGasCommand());
+			BO.Enqueue(new GetUnitCommand(Units.EXTRACTOR, ExtraExtractor));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
+
+			BO.Enqueue(new CancelBuildingCommand(ExtraExtractor));
 			BO.Enqueue(new BuildUnitCommand(Units.OVERLORD));
-			BO.Enqueue( new BuildUnitCommand(Units.DRONE));
+			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
 
 		}
 	}

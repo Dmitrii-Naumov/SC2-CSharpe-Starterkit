@@ -27,7 +27,7 @@ namespace BeholderBot
 			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
 			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
 
-			BO.Enqueue(new ConstructCommand(Units.EXTRACTOR));
+			BO.Enqueue(new ConstructGasCommand());
 			BO.Enqueue(new ConstructCommand(Units.SPAWNING_POOL));
 
 			BO.Enqueue(new BuildUnitCommand(Units.DRONE));
